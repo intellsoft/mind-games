@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سودوکو آنلاین | بازی فکری و جدول اعداد | IntellSoft</title>
+    <meta name="description" content="بازی سودوکو آنلاین رایگان با سه سطح دشواری. بهترین بازی فکری برای تقویت حافظه و هوش. حل جدول سودوکو با قابلیت ذخیره خودکار و راهنمایی.">
+    <meta name="keywords" content="سودوکو, بازی سودوکو, حل جدول سودوکو, بازی فکری, بازی ریاضی, تقویت حافظه, بازی آنلاین, پازل اعداد, سودوکو سخت, سودوکو آسان, سودوکو برای کودکان, جدول اعداد, بازی هوش, intellsoft, sudoku persian">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --success-color: #4cc9f0;
+            --light-bg: #f8f9fa;
+            --light-card: #ffffff;
+            --light-text: #212529;
+            --light-border: #dee2e6;
+            --dark-bg: #121212;
+            --dark-card: #1e1e1e;
+            --dark-text: #f8f9fa;
+            --dark-border: #444444;
+            --easy-color: #38b000;
+            --medium-color: #ff9e00;
+            --hard-color: #e63946;
+            --cell-highlight: #caf0f8;
+            --same-number: #ffd6ff;
+            --error-text: #e63946;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--light-text);
+            transition: all 0.3s ease;
+            line-height: 1.6;
+        }
+
+        body.dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-border);
+        }
+
+        body.dark-mode header {
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .logo span {
+            color: var(--primary-color);
+        }
+
+        .theme-toggle {
+            background: var(--light-card);
+            border: 1px solid var(--light-border);
+            border-radius: 50px;
+            padding: 10px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        body.dark-mode .theme-toggle {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .game-section {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .controls-section {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .timer {
+            background: var(--light-card);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            min-width: 100px;
+            text-align: center;
+        }
+
+        body.dark-mode .timer {
+            background: var(--dark-card);
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        
+        body.dark-mode .difficulty-btn {
+            background-color: #343a40;
+            color: #adb5bd;
+        }
+
+        .difficulty-btn.active.easy {
+            background-color: var(--easy-color);
+            color: white;
+        }
+
+        .difficulty-btn.active.medium {
+            background-color: var(--medium-color);
+            color: white;
+        }
+
+        .difficulty-btn.active.hard {
+            background-color: var(--hard-color);
+            color: white;
+        }
+
+        .difficulty-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            gap: 2px;
+            background-color: var(--light-text);
+            border: 3px solid var(--light-text);
+            border-radius: 5px;
+            max-width: 500px;
+            margin: 0 auto;
+            aspect-ratio: 1/1;
+        }
+
+        body.dark-mode .sudoku-grid {
+            background-color: var(--dark-text);
+            border: 3px solid var(--dark-text);
+        }
+
+        .sudoku-cell {
+            background-color: var(--light-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1rem, 4vw, 1.8rem);
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.1s;
+            border: 1px solid #e9ecef;
+            color: var(--primary-color); /* User entered numbers color */
+        }
+
+        body.dark-mode .sudoku-cell {
+            background-color: var(--dark-card);
+            border: 1px solid #343a40;
+            color: #4cc9f0;
+        }
+
+        .sudoku-cell.fixed {
+            color: var(--light-text) !important;
+            background-color: #f1f3f5;
+        }
+
+        body.dark-mode .sudoku-cell.fixed {
+            color: var(--dark-text) !important;
+            background-color: #2b2b2b;
+        }
+
+        .sudoku-cell.highlighted {
+            background-color: var(--cell-highlight) !important;
+        }
+
+        body.dark-mode .sudoku-cell.highlighted {
+            background-color: #1a3a4a !important;
+        }
+
+        .sudoku-cell.same-number {
+            background-color: var(--same-number) !important;
+        }
+
+        body.dark-mode .sudoku-cell.same-number {
+            background-color: #4a1a4a !important;
+        }
+
+        .sudoku-cell.selected {
+            background-color: var(--primary-color) !important;
+            color: white !important;
+            box-shadow: none;
+        }
+
+        .sudoku-cell.error {
+            color: var(--error-text) !important;
+            background-color: #ffe5e5 !important;
+        }
+        
+        body.dark-mode .sudoku-cell.error {
+            background-color: #3a1a1a !important;
+        }
+
+        /* Border for 3x3 blocks */
+        .sudoku-cell:nth-child(3n) {
+            border-left: 2px solid var(--light-text);
+            border-right: none;
+        }
+        
+        /* Reset for last column */
+        .sudoku-cell:nth-child(9n) {
+            border-left: none;
+        }
+        
+        /* Left border for first column to match thickness roughly if needed, usually handled by grid gap */
+        
+        /* RTL specific border handling for 3x3 blocks visually */
+        /* Since grid layout is direction agnostic in simple terms but borders matter: */
+        
+        /* Let's simply use margin/borders on specific cells assuming LTR grid flow filling but RTL text */
+        /* We'll stick to visual standard: thicker borders every 3 cells */
+
+        .sudoku-cell:nth-child(3n) {
+            border-left: 2px solid #888; 
+        }
+        .sudoku-cell:nth-child(9n) {
+            border-left: 1px solid #e9ecef; /* reset */
+        }
+        /* Fix for RTL direction confusion: easier to use specific indices or just grid gap hack */
+        /* Actually the grid gap handles the main thick borders if we color the background of container. 
+           We are using gap:2px with black background. So we just need to hide inner borders slightly? 
+           The current CSS has border-right. In RTL, we might want border-left visually? 
+           Let's rely on the grid gap for the thick lines logic properly.
+        */
+        
+        /* Cleaner Grid Lines approach */
+        .sudoku-grid {
+            gap: 1px;
+            background-color: #888;
+        }
+        .sudoku-cell {
+            border: none;
+        }
+        /* Thick borders */
+        .sudoku-cell:nth-child(3n) {
+            margin-left: 2px;
+        }
+        .sudoku-cell:nth-child(9n) {
+            margin-left: 0;
+        }
+        .sudoku-cell:nth-child(n+19):nth-child(-n+27),
+        .sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+            margin-bottom: 2px;
+        }
+
+        .number-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .number-btn {
+            padding: 15px 5px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--light-card);
+            color: var(--light-text);
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .number-btn {
+            background-color: var(--dark-card);
+            color: var(--dark-text);
+        }
+
+        .number-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .number-btn.clear {
+            grid-column: span 2;
+            background-color: #e63946;
+            color: white;
+        }
+
+        .control-panel {
+            background-color: var(--light-card);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        body.dark-mode .control-panel {
+            background-color: var(--dark-card);
+        }
+
+        .control-panel h2 {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .control-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .control-btn i {
+            font-size: 1.2rem;
+        }
+
+        .check-btn {
+            background-color: #4cc9f0;
+            color: white;
+        }
+
+        .hint-btn {
+            background-color: #7209b7;
+            color: white;
+        }
+
+        .solve-btn {
+            background-color: #f72585;
+            color: white;
+        }
+
+        .newgame-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stats-section {
+            background-color: var(--light-card);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        body.dark-mode .stats-section {
+            background-color: var(--dark-card);
+        }
+
+        .stats-section h2 {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            background-color: var(--light-bg);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        body.dark-mode .stat-item {
+            background-color: var(--dark-bg);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .share-section {
+            background-color: var(--light-card);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        body.dark-mode .share-section {
+            background-color: var(--dark-card);
+        }
+
+        .share-section h2 {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .share-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .share-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 150px;
+            justify-content: center;
+        }
+
+        .share-btn.twitter {
+            background-color: #1da1f2;
+            color: white;
+        }
+
+        .share-btn.telegram {
+            background-color: #0088cc;
+            color: white;
+        }
+
+        .share-btn.image {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .help-section {
+            margin-top: 30px;
+            background-color: var(--light-card);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        body.dark-mode .help-section {
+            background-color: var(--dark-card);
+        }
+
+        .help-section h2 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .help-section p {
+            margin-bottom: 15px;
+        }
+
+        .rules {
+            background-color: var(--light-bg);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        body.dark-mode .rules {
+            background-color: var(--dark-bg);
+        }
+
+        .rules ul {
+            padding-right: 20px;
+        }
+
+        .rules li {
+            margin-bottom: 10px;
+        }
+
+        .seo-footer {
+            margin-top: 50px;
+            padding: 30px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .seo-footer a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .seo-footer a:hover {
+            color: #ffd166;
+            text-decoration: underline;
+        }
+
+        .seo-keywords {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .keyword {
+            background-color: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sudoku-grid {
+                max-width: 100%;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .share-buttons {
+                flex-direction: column;
+            }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--light-card);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+        }
+
+        body.dark-mode .modal-content {
+            background-color: var(--dark-card);
+        }
+
+        .modal h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-modal:hover {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-th"></i>
+                <h1>سودوکو <span>آنلاین</span></h1>
+            </div>
+            <div class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+                <span>حالت تاریک</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="game-section">
+                <div class="game-info">
+                    <div class="timer" id="timer">۰۰:۰۰</div>
+                    <div class="difficulty-selector">
+                        <button class="difficulty-btn easy active" data-level="easy">آسان</button>
+                        <button class="difficulty-btn medium" data-level="medium">متوسط</button>
+                        <button class="difficulty-btn hard" data-level="hard">سخت</button>
+                    </div>
+                </div>
+
+                <div class="sudoku-grid" id="sudokuGrid">
+                    </div>
+
+                <div class="number-selector" id="numberSelector">
+                    </div>
+            </section>
+
+            <section class="controls-section">
+                <div class="control-panel">
+                    <h2>کنترل بازی</h2>
+                    <div class="control-buttons">
+                        <button class="control-btn check-btn" id="checkBtn">
+                            <i class="fas fa-check-circle"></i>
+                            بررسی پاسخ
+                        </button>
+                        <button class="control-btn hint-btn" id="hintBtn">
+                            <i class="fas fa-lightbulb"></i>
+                            راهنمایی
+                        </button>
+                        <button class="control-btn solve-btn" id="solveBtn">
+                            <i class="fas fa-brain"></i>
+                            حل خودکار
+                        </button>
+                        <button class="control-btn newgame-btn" id="newGameBtn">
+                            <i class="fas fa-plus-circle"></i>
+                            بازی جدید
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-section">
+                    <h2>آمار بازی</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="gamesPlayed">۰</div>
+                            <div>بازی انجام شده</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="gamesSolved">۰</div>
+                            <div>بازی حل شده</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="bestTime">۰۰:۰۰</div>
+                            <div>بهترین زمان</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="hintsUsed">۰</div>
+                            <div>راهنمایی استفاده شده</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="share-section">
+                    <h2>اشتراک‌گذاری</h2>
+                    <div class="share-buttons">
+                        <button class="share-btn twitter" id="shareTwitter">
+                            <i class="fab fa-twitter"></i>
+                            توییتر
+                        </button>
+                        <button class="share-btn telegram" id="shareTelegram">
+                            <i class="fab fa-telegram"></i>
+                            تلگرام
+                        </button>
+                        <button class="share-btn image" id="shareImage">
+                            <i class="fas fa-camera"></i>
+                            ذخیره عکس
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <section class="help-section">
+            <h2>راهنمای بازی سودوکو</h2>
+            <p>سودوکو یک بازی فکری جذاب است که در یک جدول ۹×۹ بازی می‌شود. هدف بازی پر کردن خانه‌های خالی با اعداد ۱ تا ۹ است به طوری که در هر ردیف، هر ستون و هر بلوک ۳×۳، اعداد ۱ تا ۹ بدون تکرار قرار گیرند.</p>
+            
+            <div class="rules">
+                <h3>قوانین بازی:</h3>
+                <ul>
+                    <li>هر ردیف باید شامل تمام اعداد ۱ تا ۹ بدون تکرار باشد.</li>
+                    <li>هر ستون باید شامل تمام اعداد ۱ تا ۹ بدون تکرار باشد.</li>
+                    <li>هر بلوک ۳×۳ باید شامل تمام اعداد ۱ تا ۹ بدون تکرار باشد.</li>
+                    <li>اعداد از پیش تعیین شده (خاکستری) را نمی‌توان تغییر داد.</li>
+                    <li>از دکمه‌های عددی پایین صفحه یا صفحه کلید برای وارد کردن اعداد استفاده کنید.</li>
+                </ul>
+            </div>
+        </section>
+
+        <footer class="seo-footer">
+            <p>این بازی سودوکو آنلاین توسط <a href="https://intellsoft.ir" target="_blank" rel="noopener">IntellSoft</a> طراحی و توسعه یافته است.</p>
+            <p><a href="https://intellsoft.ir" target="_blank" rel="noopener">IntellSoft</a> ارائه‌دهنده راه‌حل‌های نرم‌افزاری و بازی‌های فکری آنلاین برای تقویت مهارت‌های ذهنی</p>
+            <div class="seo-keywords">
+                <span class="keyword">بازی سودوکو آنلاین</span>
+                <span class="keyword">بازی فکری رایگان</span>
+                <span class="keyword">تقویت حافظه با سودوکو</span>
+                <span class="keyword">حل جدول اعداد</span>
+                <span class="keyword">بازی ریاضی آنلاین</span>
+                <span class="keyword">سودوکو برای موبایل</span>
+                <span class="keyword">سودوکو فارسی</span>
+                <span class="keyword">حل سودوکو سخت</span>
+                <span class="keyword">آموزش سودوکو</span>
+            </div>
+        </footer>
+    </div>
+
+    <div class="modal" id="messageModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <h2 id="modalTitle">عنوان پیام</h2>
+            <p id="modalMessage">متن پیام</p>
+            <button class="control-btn newgame-btn" id="modalButton" style="margin-top: 20px;">باشه</button>
+        </div>
+    </div>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>
+        // Game state
+        const gameState = {
+            level: 'easy',
+            timer: 0,
+            timerInterval: null,
+            selectedCell: null,
+            board: [], // Current state of the board
+            solution: [], // Full solved board
+            initialBoard: [], // The puzzle as presented to user (0 for empty)
+            gameActive: false,
+            hintsUsed: 0,
+            gamesPlayed: 0,
+            gamesSolved: 0,
+            bestTime: null
+        };
+
+        // DOM elements
+        const sudokuGrid = document.getElementById('sudokuGrid');
+        const numberSelector = document.getElementById('numberSelector');
+        const timerElement = document.getElementById('timer');
+        const themeToggle = document.getElementById('themeToggle');
+        const checkBtn = document.getElementById('checkBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const solveBtn = document.getElementById('solveBtn');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+        const gamesPlayedElement = document.getElementById('gamesPlayed');
+        const gamesSolvedElement = document.getElementById('gamesSolved');
+        const bestTimeElement = document.getElementById('bestTime');
+        const hintsUsedElement = document.getElementById('hintsUsed');
+        const shareTwitterBtn = document.getElementById('shareTwitter');
+        const shareTelegramBtn = document.getElementById('shareTelegram');
+        const shareImageBtn = document.getElementById('shareImage');
+        const messageModal = document.getElementById('messageModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalButton = document.getElementById('modalButton');
+        const closeModal = document.getElementById('closeModal');
+
+        // Initialize the game
+        function initGame() {
+            loadStats();
+            createSudokuGrid();
+            createNumberSelector();
+            setupEventListeners();
+            
+            // Try to load saved game, if valid exists
+            const loaded = loadGame();
+            if (!loaded) {
+                generateNewPuzzle('easy');
+            }
+            
+            updateStatsDisplay();
+        }
+
+        // Create the sudoku grid
+        function createSudokuGrid() {
+            sudokuGrid.innerHTML = '';
+            for (let i = 0; i < 81; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'sudoku-cell';
+                cell.dataset.index = i;
+                cell.dataset.row = Math.floor(i / 9);
+                cell.dataset.col = i % 9;
+                cell.dataset.block = Math.floor(Math.floor(i / 9) / 3) * 3 + Math.floor((i % 9) / 3);
+                
+                cell.addEventListener('click', () => selectCell(cell));
+                sudokuGrid.appendChild(cell);
+            }
+        }
+
+        // Create number selector
+        function createNumberSelector() {
+            numberSelector.innerHTML = '';
+            
+            // Numbers 1-9
+            for (let i = 1; i <= 9; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'number-btn';
+                btn.textContent = i;
+                btn.dataset.number = i;
+                btn.addEventListener('click', () => inputNumber(i));
+                numberSelector.appendChild(btn);
+            }
+            
+            // Clear button
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'number-btn clear';
+            clearBtn.innerHTML = '<i class="fas fa-eraser"></i> پاک کردن';
+            clearBtn.addEventListener('click', () => inputNumber(0));
+            numberSelector.appendChild(clearBtn);
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // Difficulty buttons
+            difficultyButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    difficultyButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    generateNewPuzzle(btn.dataset.level);
+                });
+            });
+            
+            // Control buttons
+            checkBtn.addEventListener('click', checkSolution);
+            hintBtn.addEventListener('click', giveHint);
+            solveBtn.addEventListener('click', solvePuzzle);
+            newGameBtn.addEventListener('click', () => {
+                if(confirm('آیا مطمئن هستید؟ بازی فعلی از دست می‌رود.')) {
+                    generateNewPuzzle(gameState.level);
+                }
+            });
+            
+            // Share buttons
+            shareTwitterBtn.addEventListener('click', shareToTwitter);
+            shareTelegramBtn.addEventListener('click', shareToTelegram);
+            shareImageBtn.addEventListener('click', shareAsImage);
+            
+            // Modal buttons
+            modalButton.addEventListener('click', () => {
+                messageModal.style.display = 'none';
+                if (modalTitle.textContent === 'تبریک!') {
+                    // Logic after winning modal closed if needed
+                }
+            });
+            
+            closeModal.addEventListener('click', () => {
+                messageModal.style.display = 'none';
+            });
+            
+            // Keyboard support
+            document.addEventListener('keydown', handleKeyPress);
+        }
+
+        // Generate a new sudoku puzzle
+        function generateNewPuzzle(level) {
+            // Stop current timer
+            stopTimer();
+            
+            // Reset game state
+            gameState.level = level;
+            gameState.timer = 0;
+            gameState.selectedCell = null;
+            gameState.hintsUsed = 0;
+            gameState.gameActive = true;
+            
+            // Generate a random solved sudoku
+            generateSolvedSudoku();
+            
+            // Determine number of cells to remove
+            let cellsToRemove;
+            switch(level) {
+                case 'easy':
+                    cellsToRemove = 30; // Fewer removed for easy
+                    break;
+                case 'medium':
+                    cellsToRemove = 40;
+                    break;
+                case 'hard':
+                    cellsToRemove = 50; 
+                    break;
+                default:
+                    cellsToRemove = 30;
+            }
+            
+            // Create puzzle by removing numbers
+            createPuzzle(cellsToRemove);
+            
+            // IMPORTANT: Copy the puzzle state to initialBoard
+            // This defines which cells are fixed (non-editable)
+            gameState.initialBoard = [...gameState.board];
+            
+            // Update UI
+            updateBoardDisplay();
+            
+            // Start timer
+            startTimer();
+            
+            // Save initial state
+            saveGame();
+            
+            // Increment games played
+            gameState.gamesPlayed++;
+            updateStatsDisplay();
+            saveStats();
+
+            // Update active button state
+            difficultyButtons.forEach(b => {
+                b.classList.remove('active');
+                if(b.dataset.level === level) b.classList.add('active');
+            });
+        }
+
+        // Generate a solved sudoku
+        function generateSolvedSudoku() {
+            // Start with empty board
+            const board = Array(81).fill(0);
+            
+            // Fill diagonal 3x3 blocks (independent)
+            for (let i = 0; i < 9; i += 3) {
+                fillBlock(board, i, i);
+            }
+            
+            // Solve the rest
+            solveSudoku(board);
+            
+            // Save solution
+            gameState.solution = [...board];
+        }
+
+        // Fill a 3x3 block with random numbers
+        function fillBlock(board, row, col) {
+            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            shuffleArray(numbers);
+            
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const index = (row + i) * 9 + (col + j);
+                    board[index] = numbers[i * 3 + j];
+                }
+            }
+        }
+
+        // Solve sudoku using backtracking
+        function solveSudoku(board) {
+            for (let i = 0; i < 81; i++) {
+                if (board[i] === 0) {
+                    const row = Math.floor(i / 9);
+                    const col = i % 9;
+                    
+                    // Shuffle numbers to ensure randomness in solution generation
+                    const nums = [1,2,3,4,5,6,7,8,9];
+                    shuffleArray(nums);
+
+                    for (let num of nums) {
+                        if (isValidMove(board, row, col, num)) {
+                            board[i] = num;
+                            
+                            if (solveSudoku(board)) {
+                                return true;
+                            }
+                            
+                            board[i] = 0;
+                        }
+                    }
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Create puzzle by removing numbers safely
+        function createPuzzle(attempts) {
+            // Start with solution
+            gameState.board = [...gameState.solution];
+            
+            // List of all positions
+            let positions = Array.from({length: 81}, (_, i) => i);
+            shuffleArray(positions);
+            
+            // We want to remove 'attempts' number of cells approximately
+            // But we must ensure uniqueness.
+            // If uniqueness fails, we put it back.
+            
+            let removedCount = 0;
+            
+            for (let i = 0; i < positions.length; i++) {
+                // If we have removed enough, stop
+                if (removedCount >= attempts) break;
+
+                let idx = positions[i];
+                let backup = gameState.board[idx];
+                
+                // Remove it
+                gameState.board[idx] = 0;
+                
+                // Check if still has unique solution
+                // Copy board because solver modifies it
+                let boardCopy = [...gameState.board];
+                
+                // We need exactly 1 solution. 
+                // Since we started from a valid board, there is at least 1.
+                // We check if there are 2.
+                let solutions = countSolutions(boardCopy, 2);
+                
+                if (solutions !== 1) {
+                    // Not unique (or invalid), put it back
+                    gameState.board[idx] = backup;
+                } else {
+                    removedCount++;
+                }
+            }
+        }
+
+        // Check if a move is valid
+        function isValidMove(board, row, col, num) {
+            // Check row
+            for (let c = 0; c < 9; c++) {
+                if (board[row * 9 + c] === num) return false;
+            }
+            
+            // Check column
+            for (let r = 0; r < 9; r++) {
+                if (board[r * 9 + col] === num) return false;
+            }
+            
+            // Check 3x3 block
+            const blockRow = Math.floor(row / 3) * 3;
+            const blockCol = Math.floor(col / 3) * 3;
+            
+            for (let r = blockRow; r < blockRow + 3; r++) {
+                for (let c = blockCol; c < blockCol + 3; c++) {
+                    if (board[r * 9 + c] === num) return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // Count solutions (stops if limit reached)
+        function countSolutions(board, limit) {
+            let count = 0;
+            
+            function search(idx) {
+                // Optimization: stop if we found enough solutions
+                if (count >= limit) return;
+
+                // Find next empty cell
+                while (idx < 81 && board[idx] !== 0) {
+                    idx++;
+                }
+                
+                // If no empty cells, we found a solution
+                if (idx === 81) {
+                    count++;
+                    return;
+                }
+                
+                const row = Math.floor(idx / 9);
+                const col = idx % 9;
+                
+                for (let num = 1; num <= 9; num++) {
+                    if (isValidMove(board, row, col, num)) {
+                        board[idx] = num;
+                        search(idx + 1);
+                        board[idx] = 0; // Backtrack
+                    }
+                }
+            }
+            
+            search(0);
+            return count;
+        }
+
+        // Update board display
+        function updateBoardDisplay() {
+            const cells = document.querySelectorAll('.sudoku-cell');
+            
+            cells.forEach(cell => {
+                const index = parseInt(cell.dataset.index);
+                const value = gameState.board[index];
+                
+                // Show number if not 0, else empty
+                cell.textContent = value === 0 ? '' : value;
+                
+                // Reset classes
+                cell.className = 'sudoku-cell';
+                
+                // Add fixed class if it's part of the initial puzzle
+                if (gameState.initialBoard[index] !== 0) {
+                    cell.classList.add('fixed');
+                }
+                
+                // Add selected class
+                if (gameState.selectedCell === cell) {
+                    cell.classList.add('selected');
+                }
+            });
+            
+            // Re-apply highlights if a cell is selected
+            highlightRelatedCells();
+        }
+
+        // Select a cell
+        function selectCell(cell) {
+            if (!gameState.gameActive) return;
+            
+            const index = parseInt(cell.dataset.index);
+            
+            // Optional: Prevent selecting fixed cells if you only want to allow selecting empty ones
+            // But usually standard behavior allows selecting fixed cells to highlight same numbers
+            
+            // Deselect previous
+            if (gameState.selectedCell) {
+                gameState.selectedCell.classList.remove('selected');
+            }
+            
+            // Select new
+            gameState.selectedCell = cell;
+            cell.classList.add('selected');
+            
+            // Highlight logic
+            highlightRelatedCells();
+        }
+
+        // Highlight related cells
+        function highlightRelatedCells() {
+            if (!gameState.selectedCell) return;
+            
+            const cells = document.querySelectorAll('.sudoku-cell');
+            const selectedIndex = parseInt(gameState.selectedCell.dataset.index);
+            const selectedRow = Math.floor(selectedIndex / 9);
+            const selectedCol = selectedIndex % 9;
+            const selectedBlock = Math.floor(selectedRow / 3) * 3 + Math.floor(selectedCol / 3);
+            
+            // Get value to highlight same numbers
+            // We check board array, not textContent, to be accurate
+            const selectedValue = gameState.board[selectedIndex];
+            
+            cells.forEach(cell => {
+                const index = parseInt(cell.dataset.index);
+                const row = Math.floor(index / 9);
+                const col = index % 9;
+                const block = Math.floor(row / 3) * 3 + Math.floor(col / 3);
+                const value = gameState.board[index];
+                
+                // Remove old highlights
+                cell.classList.remove('highlighted', 'same-number');
+                
+                // Highlight row/col/block
+                if (row === selectedRow || col === selectedCol || block === selectedBlock) {
+                    if (index !== selectedIndex) {
+                        cell.classList.add('highlighted');
+                    }
+                }
+                
+                // Highlight matching numbers (if not empty)
+                if (selectedValue !== 0 && value === selectedValue) {
+                    cell.classList.add('same-number');
+                }
+            });
+        }
+
+        // Input number
+        function inputNumber(num) {
+            if (!gameState.selectedCell || !gameState.gameActive) return;
+            
+            const index = parseInt(gameState.selectedCell.dataset.index);
+            
+            // Check if fixed
+            if (gameState.initialBoard[index] !== 0) {
+                // Cannot change fixed numbers
+                return;
+            }
+            
+            // Update state
+            gameState.board[index] = num;
+            
+            // Clear error class if exists
+            gameState.selectedCell.classList.remove('error');
+            
+            // Update UI
+            updateBoardDisplay();
+            
+            // Save
+            saveGame();
+            
+            // Check win
+            if (isBoardFull()) {
+                if (checkFullBoardCorrect()) {
+                    gameCompleted();
+                }
+            }
+        }
+
+        // Keyboard handler
+        function handleKeyPress(e) {
+            if (!gameState.gameActive) return;
+            
+            // Numbers
+            if (e.key >= '1' && e.key <= '9') {
+                inputNumber(parseInt(e.key));
+                return;
+            }
+            
+            if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
+                inputNumber(0);
+                return;
+            }
+            
+            // Arrows
+            if (gameState.selectedCell) {
+                e.preventDefault(); // prevent scrolling
+                const index = parseInt(gameState.selectedCell.dataset.index);
+                let newIndex = index;
+                
+                if (e.key === 'ArrowUp') newIndex -= 9;
+                if (e.key === 'ArrowDown') newIndex += 9;
+                if (e.key === 'ArrowLeft') newIndex -= 1; // RTL: visually left means index-1 usually, let's keep it standard
+                if (e.key === 'ArrowRight') newIndex += 1;
+                
+                // Boundary checks implicitly handled by logic or explicit check
+                if (newIndex >= 0 && newIndex < 81) {
+                    const cells = document.querySelectorAll('.sudoku-cell');
+                    // Check if jumping rows weirdly (e.g. from right edge to left edge of next row)
+                    // For Up/Down it's fine. For Left/Right:
+                    if (e.key === 'ArrowLeft' && index % 9 === 0) newIndex = index; // block wrapping
+                    if (e.key === 'ArrowRight' && index % 9 === 8) newIndex = index;
+                    
+                    // Allow wrapping? usually no.
+                    // Simple index check:
+                    if (newIndex >= 0 && newIndex < 81) {
+                        selectCell(cells[newIndex]);
+                    }
+                }
+            }
+        }
+
+        function isBoardFull() {
+            return !gameState.board.includes(0);
+        }
+
+        function checkFullBoardCorrect() {
+            for (let i = 0; i < 81; i++) {
+                if (gameState.board[i] !== gameState.solution[i]) return false;
+            }
+            return true;
+        }
+
+        // Check button logic (checks current inputs)
+        function checkSolution() {
+            if (!gameState.gameActive) return;
+            
+            let allCorrect = true;
+            let hasError = false;
+            const cells = document.querySelectorAll('.sudoku-cell');
+            
+            cells.forEach(cell => {
+                const index = parseInt(cell.dataset.index);
+                // Only check user filled cells
+                if (gameState.initialBoard[index] === 0 && gameState.board[index] !== 0) {
+                    if (gameState.board[index] !== gameState.solution[index]) {
+                        cell.classList.add('error');
+                        hasError = true;
+                        allCorrect = false;
+                    }
+                }
+            });
+            
+            if (hasError) {
+                showMessage('خطا', 'برخی از اعداد وارد شده اشتباه هستند. خانه‌های قرمز را بررسی کنید.');
+            } else {
+                showMessage('وضعیت', 'تا اینجای کار همه اعداد درست هستند!');
+            }
+        }
+
+        // Hint logic
+        function giveHint() {
+            if (!gameState.gameActive) return;
+            
+            // Find empty cells
+            const emptyIndices = [];
+            for(let i=0; i<81; i++) {
+                if(gameState.board[i] === 0) emptyIndices.push(i);
+            }
+            
+            if (emptyIndices.length === 0) return;
+            
+            // Pick random
+            const idx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+            
+            // Fill it
+            gameState.board[idx] = gameState.solution[idx];
+            gameState.hintsUsed++;
+            
+            updateBoardDisplay();
+            saveGame();
+            
+            // Highlight the hint
+            const cells = document.querySelectorAll('.sudoku-cell');
+            cells[idx].classList.add('selected');
+            gameState.selectedCell = cells[idx];
+            
+            if (isBoardFull() && checkFullBoardCorrect()) {
+                gameCompleted();
+            }
+        }
+
+        function solvePuzzle() {
+            if (!gameState.gameActive) return;
+            if(confirm('آیا مطمئن هستید؟ جدول کامل حل می‌شود و بازی تمام خواهد شد.')) {
+                gameState.board = [...gameState.solution];
+                updateBoardDisplay();
+                gameCompleted();
+            }
+        }
+
+        function gameCompleted() {
+            stopTimer();
+            gameState.gameActive = false;
+            gameState.gamesSolved++;
+            
+            if (gameState.bestTime === null || gameState.timer < gameState.bestTime) {
+                gameState.bestTime = gameState.timer;
+            }
+            
+            saveStats();
+            // Clear saved game so next reload starts fresh
+            localStorage.removeItem('sudoku-game');
+            
+            showMessage('تبریک!', `شما برنده شدید! زمان: ${formatTime(gameState.timer)}`, 'بازی جدید');
+            
+            // Reset button action on modal to start new game
+            modalButton.onclick = function() {
+                messageModal.style.display = 'none';
+                generateNewPuzzle(gameState.level);
+                // Reset onclick
+                modalButton.onclick = function() { messageModal.style.display = 'none'; };
+            };
+        }
+
+        // Timer functions
+        function startTimer() {
+            stopTimer();
+            // If timer is 0 (new game), start fresh. If loaded, continue.
+            updateTimerDisplay();
+            gameState.timerInterval = setInterval(() => {
+                gameState.timer++;
+                updateTimerDisplay();
+                // Save occasionally
+                if (gameState.timer % 5 === 0) saveGame();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+        }
+
+        function updateTimerDisplay() {
+            timerElement.textContent = formatTime(gameState.timer);
+        }
+
+        function formatTime(s) {
+            const m = Math.floor(s / 60);
+            const sec = s % 60;
+            return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+        }
+
+        // Theme
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            
+            const icon = themeToggle.querySelector('i');
+            const text = themeToggle.querySelector('span');
+            
+            if (isDark) {
+                icon.className = 'fas fa-sun';
+                text.textContent = 'حالت روشن';
+            } else {
+                icon.className = 'fas fa-moon';
+                text.textContent = 'حالت تاریک';
+            }
+            localStorage.setItem('sudoku-theme', isDark ? 'dark' : 'light');
+        }
+
+        // Persistence
+        function saveGame() {
+            if (!gameState.gameActive) return; // Don't save completed games as resume-able
+            const data = {
+                board: gameState.board,
+                initialBoard: gameState.initialBoard,
+                solution: gameState.solution,
+                level: gameState.level,
+                timer: gameState.timer,
+                hintsUsed: gameState.hintsUsed
+            };
+            localStorage.setItem('sudoku-game', JSON.stringify(data));
+        }
+
+        function loadGame() {
+            try {
+                const saved = localStorage.getItem('sudoku-game');
+                if (!saved) return false;
+                
+                const data = JSON.parse(saved);
+                
+                // Validate data
+                if (!data.board || !data.solution || data.board.length !== 81) return false;
+                
+                // If board is full (solved), don't load it as active game
+                if (!data.board.includes(0)) return false;
+
+                gameState.board = data.board;
+                gameState.initialBoard = data.initialBoard;
+                gameState.solution = data.solution;
+                gameState.level = data.level;
+                gameState.timer = data.timer;
+                gameState.hintsUsed = data.hintsUsed;
+                gameState.gameActive = true;
+                
+                updateBoardDisplay();
+                startTimer();
+                
+                // Set difficulty button
+                difficultyButtons.forEach(b => {
+                    b.classList.remove('active');
+                    if(b.dataset.level === gameState.level) b.classList.add('active');
+                });
+                
+                return true;
+            } catch (e) {
+                console.error("Save file corrupted", e);
+                return false;
+            }
+        }
+
+        function saveStats() {
+            const stats = {
+                gamesPlayed: gameState.gamesPlayed,
+                gamesSolved: gameState.gamesSolved,
+                bestTime: gameState.bestTime,
+                hintsUsed: gameState.hintsUsed
+            };
+            localStorage.setItem('sudoku-stats', JSON.stringify(stats));
+        }
+
+        function loadStats() {
+            const s = localStorage.getItem('sudoku-stats');
+            if (s) {
+                const stats = JSON.parse(s);
+                gameState.gamesPlayed = stats.gamesPlayed || 0;
+                gameState.gamesSolved = stats.gamesSolved || 0;
+                gameState.bestTime = stats.bestTime || null;
+                gameState.hintsUsed = stats.hintsUsed || 0;
+            }
+            
+            // Load theme
+            if (localStorage.getItem('sudoku-theme') === 'dark') {
+                toggleTheme(); // will switch to dark
+            }
+        }
+
+        function updateStatsDisplay() {
+            gamesPlayedElement.textContent = gameState.gamesPlayed;
+            gamesSolvedElement.textContent = gameState.gamesSolved;
+            hintsUsedElement.textContent = gameState.hintsUsed;
+            if (gameState.bestTime !== null) {
+                bestTimeElement.textContent = formatTime(gameState.bestTime);
+            }
+        }
+
+        // Sharing
+        function shareToTwitter() {
+            const text = `من سودوکو ${gameState.level} را در ${formatTime(gameState.timer)} حل کردم!`;
+            const url = window.location.href; 
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+        }
+
+        function shareToTelegram() {
+             const text = `من سودوکو ${gameState.level} را در ${formatTime(gameState.timer)} حل کردم!`;
+             window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function shareAsImage() {
+            html2canvas(document.querySelector('.game-section')).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `sudoku-${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        function showMessage(title, msg, btnText) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = msg;
+            if(btnText) modalButton.textContent = btnText;
+            else modalButton.textContent = 'باشه';
+            messageModal.style.display = 'flex';
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Start
+        window.addEventListener('DOMContentLoaded', initGame);
+
+    </script>
+</body>
+</html>
