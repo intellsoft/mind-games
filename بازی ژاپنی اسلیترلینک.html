@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>اسلیترلینک - بازی فکری ژاپنی</title>
+  <style>
+    /* استانداردهای مدرن ۲۰۲۶ - طراحی تمیز و رسپانسیو */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f7f3e9 0%, #e8e0d5 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', 'Vazirmatn', system-ui, sans-serif;
+      padding: 16px;
+      margin: 0;
+    }
+
+    /* کانتینر اصلی بازی - با id مشخص که هرجا قرار گیرد کار کند */
+    #slitherlink-container {
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+      background: rgba(255, 250, 240, 0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 48px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 6px 12px rgba(0, 0, 0, 0.05);
+      padding: 24px 20px 28px;
+      border: 1px solid rgba(180, 150, 120, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    /* هدر بازی */
+    .game-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding: 0 8px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .game-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #3a2c1b;
+      letter-spacing: -0.5px;
+      text-shadow: 2px 2px 0 rgba(255, 215, 150, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .game-title span {
+      background: #5e4b3a;
+      color: #f3e9d2;
+      font-size: 1rem;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-weight: 400;
+    }
+
+    .score-box {
+      background: #2e241a;
+      padding: 10px 20px;
+      border-radius: 60px;
+      color: #ffd78c;
+      font-weight: bold;
+      font-size: 1.3rem;
+      box-shadow: inset 0 -2px 0 #6b4f2e, 0 6px 12px rgba(0,0,0,0.1);
+      border-bottom: 3px solid #c9a86b;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      margin: 10px 0 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    #slitherlink-canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1/1;
+      background: #fdf3e0;
+      border-radius: 32px;
+      box-shadow: inset 0 0 0 1px rgba(100, 70, 40, 0.15), 0 12px 24px -8px rgba(60, 40, 20, 0.2);
+      touch-action: none;  /* جلوگیری از اسکرول هنگام لمس */
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+
+    #slitherlink-canvas:active {
+      box-shadow: inset 0 0 0 1px #b3956a, 0 12px 24px -8px #3f2e1c;
+    }
+
+    /* پنل دکمه‌ها */
+    .button-panel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 18px 0 10px;
+    }
+
+    .btn {
+      background: #e7dcc8;
+      border: none;
+      border-bottom: 4px solid #a58e72;
+      color: #2e241a;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 12px 20px;
+      min-width: 90px;
+      border-radius: 48px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      transition: all 0.15s;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      backdrop-filter: blur(4px);
+      flex: 0 1 auto;
+    }
+
+    .btn:hover {
+      background: #d4c4ab;
+      border-bottom-width: 3px;
+      transform: translateY(2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    }
+
+    .btn:active {
+      transform: translateY(4px);
+      border-bottom-width: 1px;
+    }
+
+    .btn-primary {
+      background: #5e7a5c;
+      border-bottom-color: #2e452c;
+      color: #fbf3e0;
+    }
+
+    .btn-primary:hover {
+      background: #4e684c;
+    }
+
+    .btn-warning {
+      background: #b38b5b;
+      border-bottom-color: #7a5e3c;
+      color: #faf1e2;
+    }
+
+    /* بخش راهنما (فارسی) */
+    .guide-section {
+      background: #e7d9c6;
+      margin-top: 22px;
+      padding: 18px 20px;
+      border-radius: 28px;
+      color: #2c241a;
+      box-shadow: inset 0 1px 4px #fff8e7, 0 6px 12px rgba(70, 50, 30, 0.08);
+      border-right: 6px solid #a5835e;
+    }
+
+    .guide-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guide-text {
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
+
+    .guide-text ul {
+      padding-right: 24px;
+      margin-top: 6px;
+    }
+
+    .guide-text li {
+      margin-bottom: 8px;
+    }
+
+    .status-message {
+      text-align: center;
+      min-height: 28px;
+      font-weight: 500;
+      color: #3e5a3c;
+      margin: 5px 0;
+    }
+
+    /* رسپانسیو برای موبایل */
+    @media (max-width: 480px) {
+      #slitherlink-container {
+        padding: 16px 12px 20px;
+        border-radius: 32px;
+      }
+      .game-title {
+        font-size: 1.5rem;
+      }
+      .btn {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        min-width: 70px;
+      }
+      .score-box {
+        padding: 6px 16px;
+        font-size: 1.1rem;
+      }
+      .guide-text {
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- بازی دقیقاً در این div با id مشخص قرار می‌گیرد -->
+<div id="slitherlink-container">
+  <div class="game-header">
+    <div class="game-title">
+      🧩 اسلیترلینک
+      <span>Slitherlink</span>
+    </div>
+    <div class="score-box">
+      🏆 <span id="scoreDisplay">0</span>
+    </div>
+  </div>
+
+  <div class="canvas-wrapper">
+    <canvas id="slitherlink-canvas" width="600" height="600"></canvas>
+  </div>
+
+  <div id="gameStatus" class="status-message">✨ برای رسم خط کلیک کنید (یا لمس کنید)</div>
+
+  <div class="button-panel">
+    <button class="btn" id="resetBtn" title="بازنشانی معما">🔄 تازه</button>
+    <button class="btn" id="clearBtn" title="پاک کردن خطوط">🧹 پاک‌کردن</button>
+    <button class="btn btn-primary" id="checkBtn">✅ بررسی حلقه</button>
+    <button class="btn btn-warning" id="saveBtn">💾 ذخیره بازی</button>
+  </div>
+
+  <!-- راهنمای فارسی -->
+  <div class="guide-section">
+    <div class="guide-title">
+      📘 راهنمای بازی
+    </div>
+    <div class="guide-text">
+      <ul>
+        <li><strong>هدف:</strong> یک حلقه بسته رسم کنید که از همهٔ اعداد مشخص‌شده پیروی کند.</li>
+        <li><strong>قوانین:</strong> عدد داخل هر خانه نشان‌دهندهٔ تعداد خطوط دور آن خانه است (۰ تا ۳). خطوط فقط افقی یا عمودی بین نقطه‌ها رسم می‌شوند.</li>
+        <li><strong>روش بازی:</strong> روی خطوط کلیک کنید (یا لمس کنید) تا بین حالت «خط»، «ضربدر (ممنوع)» و «خالی» جابجا شوید.</li>
+        <li><strong>حلقهٔ درست:</strong> باید یک حلقهٔ واحد و بسته تشکیل شود، بدون انشعاب و بدون خط اضافه.</li>
+        <li>بازی به‌طور خودکار در مرورگر ذخیره می‌شود. با دکمه «بررسی حلقه» درستی آن را بسنجید و امتیاز بگیرید.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    "use strict";
+
+    // ---------- استانداردهای ۲۰۲۶: ماژولار، تمیز، async-safe ----------
+    const STORAGE_KEY = 'slitherlink_save_v1';
+    const SCORE_KEY = 'slitherlink_score';
+
+    // ابعاد جدول (۵ در ۵) – معما از پیش تعیین شده
+    const GRID_SIZE = 5;
+
+    // آرایه اعداد راهنما (null یعنی خانه عدد ندارد)
+    // یک معمای استاندارد و قابل حل
+    const CLUES = [
+      [2,   null, 2,   null, null],
+      [null, 2,   null, 2,   null],
+      [2,   null, 1,   null, 2  ],
+      [null, 2,   null, 2,   null],
+      [null, null, 2,   null, 2  ]
+    ];
+
+    // وضعیت خطوط افقی: آرایه [GRID_SIZE+1][GRID_SIZE]
+    // وضعیت خطوط عمودی: آرایه [GRID_SIZE][GRID_SIZE+1]
+    // مقدارها: 0 = خالی, 1 = خط, 2 = ضربدر (ممنوع)
+    let hEdges = [];
+    let vEdges = [];
+
+    // امتیاز کاربر (تعداد دفعات حل موفق)
+    let userScore = 0;
+
+    // پرچم برای جلوگیری از امتیازدهی تکراری با همان وضعیت حل شده
+    let puzzleAlreadyScored = false;
+
+    // ارجاع به المان‌ها
+    const canvas = document.getElementById('slitherlink-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreSpan = document.getElementById('scoreDisplay');
+    const statusDiv = document.getElementById('gameStatus');
+
+    // ---------- مقداردهی اولیه آرایه‌ها ----------
+    function initEmptyEdges() {
+      hEdges = Array(GRID_SIZE + 1).fill().map(() => Array(GRID_SIZE).fill(0));
+      vEdges = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE + 1).fill(0));
+    }
+    initEmptyEdges();
+
+    // ---------- بارگذاری امتیاز از localStorage ----------
+    function loadScore() {
+      try {
+        const saved = localStorage.getItem(SCORE_KEY);
+        if (saved !== null) {
+          const parsed = parseInt(saved, 10);
+          userScore = isNaN(parsed) ? 0 : parsed;
+        }
+      } catch(e) {
+        console.warn("خطا در بارگذاری امتیاز", e);
+      }
+      updateScoreDisplay();
+    }
+
+    function saveScoreToStorage() {
+      try {
+        localStorage.setItem(SCORE_KEY, userScore.toString());
+      } catch(e) {}
+    }
+
+    function updateScoreDisplay() {
+      scoreSpan.textContent = userScore;
+    }
+
+    // افزایش امتیاز (فقط یک بار به ازای حل)
+    function incrementScoreIfNeeded() {
+      if (!puzzleAlreadyScored) {
+        userScore += 1;
+        puzzleAlreadyScored = true;
+        saveScoreToStorage();
+        updateScoreDisplay();
+        statusDiv.textContent = '🎉 آفرین! حلقه درست است. امتیاز شما افزایش یافت.';
+      } else {
+        statusDiv.textContent = '✅ حلقه همچنان درست است (قبلاً امتیاز گرفته‌اید).';
+      }
+    }
+
+    // ---------- ذخیره و بازیابی وضعیت بازی ----------
+    function saveGameState() {
+      const state = {
+        h: hEdges,
+        v: vEdges,
+        scored: puzzleAlreadyScored
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        statusDiv.textContent = '💾 وضعیت بازی ذخیره شد.';
+      } catch(e) {
+        statusDiv.textContent = '⚠️ خطا در ذخیره‌سازی.';
+      }
+    }
+
+    function loadGameState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const state = JSON.parse(raw);
+        if (state.h && state.v && Array.isArray(state.h) && Array.isArray(state.v)) {
+          // اعتبارسنجی ابعاد
+          if (state.h.length === GRID_SIZE+1 && state.h[0].length === GRID_SIZE &&
+              state.v.length === GRID_SIZE && state.v[0].length === GRID_SIZE+1) {
+            hEdges = state.h;
+            vEdges = state.v;
+            puzzleAlreadyScored = !!state.scored;
+            drawCanvas();
+            statusDiv.textContent = '📂 بازی قبلی بارگذاری شد.';
+            return true;
+          }
+        }
+      } catch(e) {}
+      return false;
+    }
+
+    // بازنشانی به حالت اولیه (خالی)
+    function resetPuzzle() {
+      initEmptyEdges();
+      puzzleAlreadyScored = false;
+      drawCanvas();
+      statusDiv.textContent = '🔄 معما از نو.';
+    }
+
+    // پاک کردن تمام خطوط و ضربدرها (حفظ امتیاز و وضعیت scored?)
+    function clearAllEdges() {
+      for (let r = 0; r <= GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          hEdges[r][c] = 0;
+        }
+      }
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c <= GRID_SIZE; c++) {
+          vEdges[r][c] = 0;
+        }
+      }
+      puzzleAlreadyScored = false;  // چون وضعیت تغییر کرده
+      drawCanvas();
+      statusDiv.textContent = '🧽 همه خطوط پاک شدند.';
+    }
+
+    // ---------- رسم بوم ----------
+    function drawCanvas() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      
+      // تنظیم ابعاد واقعی canvas برای رزولوشن مناسب
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w || 600;
+        canvas.height = h || 600;
+      }
+
+      const cw = canvas.width;
+      const ch = canvas.height;
+      
+      // پاک کردن
+      ctx.clearRect(0, 0, cw, ch);
+      
+      // محاسبه حاشیه و اندازه خانه
+      const margin = Math.min(cw, ch) * 0.08;
+      const gridSizePx = Math.min(cw - margin*2, ch - margin*2);
+      const cellSize = gridSizePx / GRID_SIZE;
+      const offsetX = (cw - gridSizePx) / 2;
+      const offsetY = (ch - gridSizePx) / 2;
+
+      // رسم شبکه نقطه‌ها
+      ctx.fillStyle = '#5a4a38';
+      for (let r = 0; r <= GRID_SIZE; r++) {
+        for (let c = 0; c <= GRID_SIZE; c++) {
+          const x = offsetX + c * cellSize;
+          const y = offsetY + r * cellSize;
+          ctx.beginPath();
+          ctx.arc(x, y, cellSize * 0.06, 0, 2 * Math.PI);
+          ctx.fillStyle = '#3b2e1f';
+          ctx.fill();
+          ctx.shadowColor = '#bba88b';
+          ctx.shadowBlur = 4;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      // رسم اعداد (راهنماها)
+      ctx.font = `bold ${cellSize * 0.45}px 'Segoe UI', 'Vazirmatn', system-ui`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#2c3e2c';
+      
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const clue = CLUES[r][c];
+          if (clue !== null) {
+            const x = offsetX + (c + 0.5) * cellSize;
+            const y = offsetY + (r + 0.5) * cellSize;
+            ctx.fillStyle = '#1e3a2e';
+            ctx.fillText(clue.toString(), x, y-2);
+          }
+        }
+      }
+
+      // رسم خطوط افقی
+      ctx.lineWidth = cellSize * 0.12;
+      ctx.lineCap = 'round';
+      for (let r = 0; r <= GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const val = hEdges[r][c];
+          if (val === 0) continue;
+          const x1 = offsetX + c * cellSize;
+          const x2 = offsetX + (c + 1) * cellSize;
+          const y = offsetY + r * cellSize;
+          
+          ctx.beginPath();
+          ctx.moveTo(x1, y);
+          ctx.lineTo(x2, y);
+          
+          if (val === 1) {
+            ctx.strokeStyle = '#2b5e2b';
+            ctx.lineWidth = cellSize * 0.1;
+            ctx.shadowColor = '#6f9e6f';
+            ctx.shadowBlur = 6;
+          } else { // ضربدر
+            ctx.strokeStyle = '#b13e3e';
+            ctx.lineWidth = cellSize * 0.07;
+            ctx.shadowBlur = 0;
+            // رسم ضربدر (دو خط مورب کوچک)
+            const midX = (x1 + x2) / 2;
+            const offsetCross = cellSize * 0.12;
+            ctx.beginPath();
+            ctx.moveTo(midX - offsetCross, y - offsetCross);
+            ctx.lineTo(midX + offsetCross, y + offsetCross);
+            ctx.moveTo(midX + offsetCross, y - offsetCross);
+            ctx.lineTo(midX - offsetCross, y + offsetCross);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            continue;
+          }
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      // رسم خطوط عمودی
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c <= GRID_SIZE; c++) {
+          const val = vEdges[r][c];
+          if (val === 0) continue;
+          const x = offsetX + c * cellSize;
+          const y1 = offsetY + r * cellSize;
+          const y2 = offsetY + (r + 1) * cellSize;
+          
+          ctx.beginPath();
+          ctx.moveTo(x, y1);
+          ctx.lineTo(x, y2);
+          
+          if (val === 1) {
+            ctx.strokeStyle = '#2b5e2b';
+            ctx.lineWidth = cellSize * 0.1;
+            ctx.shadowColor = '#6f9e6f';
+            ctx.shadowBlur = 6;
+          } else {
+            ctx.strokeStyle = '#b13e3e';
+            ctx.lineWidth = cellSize * 0.07;
+            ctx.shadowBlur = 0;
+            const midY = (y1 + y2) / 2;
+            const offsetCross = cellSize * 0.12;
+            ctx.beginPath();
+            ctx.moveTo(x - offsetCross, midY - offsetCross);
+            ctx.lineTo(x + offsetCross, midY + offsetCross);
+            ctx.moveTo(x + offsetCross, midY - offsetCross);
+            ctx.lineTo(x - offsetCross, midY + offsetCross);
+            ctx.stroke();
+            continue;
+          }
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
+      }
+    }
+
+    // ---------- بررسی حلقه (الگوریتم ساده) ----------
+    function isLoopValid() {
+      // ساخت گراف از خطوط (نقاط 0..GRID_SIZE)
+      const N = GRID_SIZE + 1;
+      const adj = Array(N * N).fill().map(() => []);
+      
+      // اضافه کردن یال‌های افقی
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          if (hEdges[r][c] === 1) {
+            const u = r * N + c;
+            const v = r * N + (c + 1);
+            adj[u].push(v);
+            adj[v].push(u);
+          }
+        }
+      }
+      // عمودی
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < N; c++) {
+          if (vEdges[r][c] === 1) {
+            const u = r * N + c;
+            const v = (r + 1) * N + c;
+            adj[u].push(v);
+            adj[v].push(u);
+          }
+        }
+      }
+
+      // بررسی درجه هر رأس (باید 0 یا 2 باشد)
+      for (let i = 0; i < N*N; i++) {
+        const deg = adj[i].length;
+        if (deg !== 0 && deg !== 2) return false;
+      }
+
+      // پیدا کردن یک رأس با درجه ۲
+      let start = -1;
+      for (let i = 0; i < N*N; i++) {
+        if (adj[i].length === 2) { start = i; break; }
+      }
+      if (start === -1) return false; // هیچ خطی نیست
+
+      // پیمایش برای یافتن حلقه واحد
+      const visited = new Array(N*N).fill(false);
+      let current = start;
+      let prev = -1;
+      let steps = 0;
+      
+      while (true) {
+        visited[current] = true;
+        const neighbors = adj[current];
+        if (neighbors.length !== 2) return false;
+        
+        const next = (neighbors[0] === prev) ? neighbors[1] : neighbors[0];
+        prev = current;
+        current = next;
+        steps++;
+        
+        if (current === start) break;
+        if (steps > N*N*2) return false; // حلقه بی‌نهایت
+      }
+
+      // بررسی اینکه همه رئوس با خط بازدید شده‌اند
+      for (let i = 0; i < N*N; i++) {
+        if (adj[i].length > 0 && !visited[i]) return false;
+      }
+
+      // بررسی اعداد راهنما
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const clue = CLUES[r][c];
+          if (clue === null) continue;
+          
+          let count = 0;
+          // بالا
+          if (hEdges[r][c] === 1) count++;
+          // پایین
+          if (hEdges[r+1][c] === 1) count++;
+          // چپ
+          if (vEdges[r][c] === 1) count++;
+          // راست
+          if (vEdges[r][c+1] === 1) count++;
+          
+          if (count !== clue) return false;
+        }
+      }
+
+      return true;
+    }
+
+    function checkSolution() {
+      if (isLoopValid()) {
+        incrementScoreIfNeeded();
+        drawCanvas();
+      } else {
+        statusDiv.textContent = '❌ حلقه کامل نیست یا قوانین رعایت نشده.';
+      }
+    }
+
+    // ---------- مدیریت رویدادها (تبدیل مختصات به یال) ----------
+    function handleCanvasInteraction(e) {
+      e.preventDefault();
+      
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      let clientX, clientY;
+      if (e.touches) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      
+      const canvasX = (clientX - rect.left) * scaleX;
+      const canvasY = (clientY - rect.top) * scaleY;
+      
+      const cw = canvas.width, ch = canvas.height;
+      const margin = Math.min(cw, ch) * 0.08;
+      const gridSizePx = Math.min(cw - margin*2, ch - margin*2);
+      const cellSize = gridSizePx / GRID_SIZE;
+      const offsetX = (cw - gridSizePx) / 2;
+      const offsetY = (ch - gridSizePx) / 2;
+      
+      // پیدا کردن نزدیک‌ترین یال
+      let minDist = cellSize * 0.4;
+      let targetType = null; // 'h' or 'v'
+      let targetR = -1, targetC = -1;
+      
+      // بررسی افقی
+      for (let r = 0; r <= GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const x1 = offsetX + c * cellSize;
+          const x2 = offsetX + (c+1) * cellSize;
+          const y = offsetY + r * cellSize;
+          
+          const dist = Math.abs(canvasY - y);
+          if (dist < minDist && canvasX >= x1 - 5 && canvasX <= x2 + 5) {
+            minDist = dist;
+            targetType = 'h';
+            targetR = r;
+            targetC = c;
+          }
+        }
+      }
+      
+      // بررسی عمودی
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c <= GRID_SIZE; c++) {
+          const x = offsetX + c * cellSize;
+          const y1 = offsetY + r * cellSize;
+          const y2 = offsetY + (r+1) * cellSize;
+          
+          const dist = Math.abs(canvasX - x);
+          if (dist < minDist && canvasY >= y1 - 5 && canvasY <= y2 + 5) {
+            minDist = dist;
+            targetType = 'v';
+            targetR = r;
+            targetC = c;
+          }
+        }
+      }
+      
+      if (targetType === null) return;
+      
+      // تغییر وضعیت (0->1->2->0)
+      let changed = false;
+      if (targetType === 'h') {
+        const val = hEdges[targetR][targetC];
+        hEdges[targetR][targetC] = (val + 1) % 3;
+        changed = true;
+      } else {
+        const val = vEdges[targetR][targetC];
+        vEdges[targetR][targetC] = (val + 1) % 3;
+        changed = true;
+      }
+      
+      if (changed) {
+        puzzleAlreadyScored = false; // تغییر داده شده، امتیاز قبلی باطل
+        drawCanvas();
+        // ذخیره خودکار بعد از تغییر (می‌توان غیرفعال کرد ولی مطابق خواسته)
+        saveGameState();
+        statusDiv.textContent = '✏️ تغییر اعمال شد.';
+      }
+    }
+
+    // ---------- راه‌اندازی ----------
+    function init() {
+      loadScore();
+      
+      // تلاش برای بارگذاری وضعیت قبلی
+      const loaded = loadGameState();
+      if (!loaded) {
+        // اگر ذخیره نبود، معمای خالی
+        drawCanvas();
+        statusDiv.textContent = '🎯 آمادهٔ بازی!';
+      } else {
+        drawCanvas();
+      }
+      
+      // رویدادها
+      canvas.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        handleCanvasInteraction(e);
+      });
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        handleCanvasInteraction(e);
+      }, {passive: false});
+      
+      canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+      
+      // دکمه‌ها
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        resetPuzzle();
+        saveGameState();
+      });
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        clearAllEdges();
+        saveGameState();
+      });
+      document.getElementById('checkBtn').addEventListener('click', () => {
+        checkSolution();
+        saveGameState(); // ذخیره امتیاز احتمالی
+      });
+      document.getElementById('saveBtn').addEventListener('click', () => {
+        saveGameState();
+      });
+      
+      // واکنش به تغییر اندازه
+      window.addEventListener('resize', () => { drawCanvas(); });
+      
+      // ذخیره خودکار قبل از بستن
+      window.addEventListener('beforeunload', () => {
+        saveGameState();
+      });
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>

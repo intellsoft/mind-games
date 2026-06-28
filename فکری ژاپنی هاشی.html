@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>هاشی - پل‌های ژاپنی</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f7f3e9 0%, #e8e0d5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            padding: 16px;
+            margin: 0;
+        }
+
+        /* کانتینر اصلی بازی - فقط با همین شناسه در هر جای صفحه قابل استفاده است */
+        #hashi-game {
+            max-width: 700px;
+            width: 100%;
+            background: #fefaf2;
+            border-radius: 48px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 6px 12px rgba(0, 0, 0, 0.05);
+            padding: 24px 20px 28px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(210, 180, 140, 0.3);
+        }
+
+        .game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding: 0 8px;
+        }
+
+        .game-title {
+            font-weight: 600;
+            font-size: 1.9rem;
+            letter-spacing: 2px;
+            color: #4a3729;
+            text-shadow: 2px 2px 0 #ede0d4;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .game-title span {
+            background: #b87c5a;
+            color: #fef6e8;
+            font-size: 1rem;
+            padding: 2px 12px;
+            border-radius: 40px;
+            box-shadow: inset 0 1px 3px #5e3e2e;
+        }
+
+        .score-badge {
+            background: #2e241e;
+            color: #f3d9b1;
+            padding: 10px 18px;
+            border-radius: 60px;
+            font-weight: bold;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 0 #1a1310;
+            border: 1px solid #b89b7e;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            margin: 8px 0 12px;
+            background: #d9cdbc;
+            border-radius: 36px;
+            padding: 12px;
+            box-shadow: inset 0 0 0 1px #b3a088, inset 0 6px 8px rgba(0,0,0,0.08), 0 10px 18px -6px rgba(60, 40, 20, 0.2);
+        }
+
+        #hashi-canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1/1;
+            background: #f3ede3;
+            border-radius: 28px;
+            box-shadow: 0 0 0 1px #cabaa7, 0 2px 6px rgba(0,0,0,0.05);
+            touch-action: none;  /* جلوگیری از اسکرول هنگام لمس */
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px 8px;
+            margin: 18px 4px 6px;
+        }
+
+        .btn {
+            background: #f3e7db;
+            border: none;
+            border-bottom: 4px solid #a5836b;
+            color: #3d2c1f;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 10px 18px;
+            min-width: 84px;
+            border-radius: 48px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.1s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            backdrop-filter: blur(4px);
+            border: 1px solid #e6d5c2;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn.primary {
+            background: #7c5f4b;
+            border-bottom-color: #3f2e23;
+            color: #fcf3e8;
+            box-shadow: 0 4px 0 #4a3629;
+        }
+
+        .status-message {
+            text-align: center;
+            min-height: 32px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #5b4232;
+            margin-top: 12px;
+            padding: 4px 10px;
+            background: #efe2d3;
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px dashed #b29179;
+        }
+
+        .footer-note {
+            font-size: 0.8rem;
+            color: #8f7763;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        /* واکنش‌گرایی */
+        @media (max-width: 480px) {
+            #hashi-game { padding: 16px 12px 20px; border-radius: 32px; }
+            .game-title { font-size: 1.6rem; }
+            .btn { padding: 8px 12px; font-size: 0.9rem; min-width: 70px; }
+            .score-badge { padding: 6px 14px; font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- این div با id مشخص بازی را در خود جای می‌دهد - هر جای صفحه قابل قرارگیری است -->
+    <div id="hashi-game"></div>
+
+    <script>
+        (function(){
+            "use strict";
+
+            // ---------- استانداردهای ۲۰۲۶: کد ماژولار، async/await ، کلاس‌های مدرن ----------
+            class HashiGame {
+                // پازل پیش‌فرض (یک معمای کلاسیک هاشی ۷x۷ با جزایر مشخص)
+                static DEFAULT_PUZZLE = {
+                    nodes: [
+                        // ردیف، ستون (مبنای صفر) و عدد جزیره
+                        { id: 0, row: 0, col: 2, val: 2 },
+                        { id: 1, row: 0, col: 4, val: 3 },
+                        { id: 2, row: 1, col: 1, val: 2 },
+                        { id: 3, row: 1, col: 5, val: 4 },
+                        { id: 4, row: 2, col: 0, val: 3 },
+                        { id: 5, row: 2, col: 3, val: 2 },
+                        { id: 6, row: 2, col: 6, val: 2 },
+                        { id: 7, row: 3, col: 2, val: 5 },
+                        { id: 8, row: 3, col: 4, val: 1 },
+                        { id: 9, row: 4, col: 0, val: 2 },
+                        { id: 10, row: 4, col: 3, val: 3 },
+                        { id: 11, row: 4, col: 6, val: 3 },
+                        { id: 12, row: 5, col: 1, val: 2 },
+                        { id: 13, row: 5, col: 5, val: 2 },
+                        { id: 14, row: 6, col: 2, val: 3 },
+                        { id: 15, row: 6, col: 4, val: 2 }
+                    ],
+                    rows: 7,
+                    cols: 7
+                };
+
+                constructor(containerId) {
+                    this.container = document.getElementById(containerId);
+                    if (!this.container) {
+                        console.error(`کانتینر با شناسه ${containerId} پیدا نشد.`);
+                        return;
+                    }
+
+                    // وضعیت بازی
+                    this.puzzle = JSON.parse(JSON.stringify(HashiGame.DEFAULT_PUZZLE)); // کپی عمیق
+                    this.nodes = this.puzzle.nodes;
+                    this.rows = this.puzzle.rows;
+                    this.cols = this.puzzle.cols;
+                    
+                    // پل‌ها: Map با کلید "id1-id2" و مقدار 0,1,2
+                    this.bridges = new Map();
+                    
+                    // اتصالات مجاز (همسایگی خط دید)
+                    this.allowedEdges = [];
+                    
+                    // انتخاب جزیره فعلی
+                    this.selectedNodeId = null;
+                    
+                    // امتیاز کاربر (تعداد دفعات حل موفق معما)
+                    this.score = 0;
+                    this.solvedFlag = false; // جلوگیری از افزایش چندباره امتیاز
+                    
+                    // وضعیت رابط کاربری
+                    this.statusMessage = '';
+                    
+                    // محاسبه اتصالات مجاز
+                    this._computeAllowedEdges();
+                    
+                    // ایجاد ساختار DOM
+                    this._buildUI();
+                    
+                    // تنظیم canvas و event listeners
+                    this.canvas = document.getElementById('hashi-canvas');
+                    this.ctx = this.canvas.getContext('2d');
+                    this._resizeCanvas();
+                    this._bindEvents();
+                    
+                    // بارگذاری بازی ذخیره شده (در صورت وجود)
+                    this._loadFromStorage();
+                    
+                    // اولین ترسیم
+                    this._redraw();
+                    
+                    // ذخیره خودکار اولیه
+                    this._saveToStorage();
+                }
+
+                // ---------- محاسبه اتصالات مجاز (هم‌ردیف یا هم‌ستون بدون جزیره بین آنها) ----------
+                _computeAllowedEdges() {
+                    this.allowedEdges = [];
+                    const nodes = this.nodes;
+                    const n = nodes.length;
+                    
+                    for (let i = 0; i < n; i++) {
+                        for (let j = i+1; j < n; j++) {
+                            const a = nodes[i];
+                            const b = nodes[j];
+                            
+                            // باید هم‌ردیف یا هم‌ستون باشند
+                            if (a.row !== b.row && a.col !== b.col) continue;
+                            
+                            // بررسی عدم وجود جزیره بین آنها
+                            let clear = true;
+                            if (a.row === b.row) {
+                                const minCol = Math.min(a.col, b.col);
+                                const maxCol = Math.max(a.col, b.col);
+                                for (let k = 0; k < n; k++) {
+                                    if (k === i || k === j) continue;
+                                    const c = nodes[k];
+                                    if (c.row === a.row && c.col > minCol && c.col < maxCol) {
+                                        clear = false;
+                                        break;
+                                    }
+                                }
+                            } else { // هم‌ستون
+                                const minRow = Math.min(a.row, b.row);
+                                const maxRow = Math.max(a.row, b.row);
+                                for (let k = 0; k < n; k++) {
+                                    if (k === i || k === j) continue;
+                                    const c = nodes[k];
+                                    if (c.col === a.col && c.row > minRow && c.row < maxRow) {
+                                        clear = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (clear) {
+                                this.allowedEdges.push({ i, j, id1: a.id, id2: b.id });
+                            }
+                        }
+                    }
+                }
+
+                // ---------- ساخت رابط کاربری داخل container ----------
+                _buildUI() {
+                    this.container.innerHTML = `
+                        <div class="game-header">
+                            <div class="game-title">
+                                🌉 هاشی
+                                <span>Bridges</span>
+                            </div>
+                            <div class="score-badge" id="score-display">🏆 ۰</div>
+                        </div>
+                        <div class="canvas-wrapper">
+                            <canvas id="hashi-canvas" width="600" height="600"></canvas>
+                        </div>
+                        <div class="control-panel">
+                            <button class="btn" id="btn-reset">🔄 از نو</button>
+                            <button class="btn primary" id="btn-check">✅ بررسی</button>
+                            <button class="btn" id="btn-save">💾 ذخیره</button>
+                            <button class="btn" id="btn-load">📂 بارگذاری</button>
+                        </div>
+                        <div class="status-message" id="status-message">برای شروع روی جزیره‌ای کلیک کنید</div>
+                        <div class="footer-note">کلیک روی جزیره اول ← سپس جزیره دوم (مجاور) برای افزودن/کم کردن پل</div>
+                    `;
+                    
+                    this.scoreDisplay = document.getElementById('score-display');
+                    this.statusDiv = document.getElementById('status-message');
+                    
+                    // دکمه‌ها
+                    document.getElementById('btn-reset').addEventListener('click', () => this._resetPuzzle());
+                    document.getElementById('btn-check').addEventListener('click', () => this._checkSolution());
+                    document.getElementById('btn-save').addEventListener('click', () => { this._saveToStorage(); this._setStatus('💾 بازی ذخیره شد'); });
+                    document.getElementById('btn-load').addEventListener('click', () => { this._loadFromStorage(); this._redraw(); this._setStatus('📂 بازی بارگذاری شد'); });
+                }
+
+                _bindEvents() {
+                    // رویدادهای موس و لمس
+                    this.canvas.addEventListener('click', (e) => this._handleTap(e));
+                    this.canvas.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        const fakeEvent = { clientX: touch.clientX, clientY: touch.clientY };
+                        this._handleTap(fakeEvent);
+                    }, { passive: false });
+                    
+                    window.addEventListener('resize', () => {
+                        this._resizeCanvas();
+                        this._redraw();
+                    });
+                }
+
+                _resizeCanvas() {
+                    const wrapper = this.canvas.parentNode;
+                    const size = Math.min(wrapper.clientWidth - 24, 600);
+                    this.canvas.style.width = `${size}px`;
+                    this.canvas.style.height = `${size}px`;
+                    this.canvas.width = size;
+                    this.canvas.height = size;
+                    this.cellSize = size / Math.max(this.rows, this.cols);
+                    this.nodeRadius = this.cellSize * 0.32;
+                }
+
+                // تبدیل مختصات کلیک به نزدیک‌ترین جزیره
+                _getNodeFromCoord(clientX, clientY) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const scaleX = this.canvas.width / rect.width;
+                    const scaleY = this.canvas.height / rect.height;
+                    
+                    const canvasX = (clientX - rect.left) * scaleX;
+                    const canvasY = (clientY - rect.top) * scaleY;
+                    
+                    const cellSize = this.cellSize;
+                    let closestNode = null;
+                    let minDist = cellSize * 0.8; // آستانه فاصله
+                    
+                    for (const node of this.nodes) {
+                        const x = (node.col + 0.5) * cellSize;
+                        const y = (node.row + 0.5) * cellSize;
+                        const dist = Math.hypot(canvasX - x, canvasY - y);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            closestNode = node;
+                        }
+                    }
+                    return closestNode;
+                }
+
+                _handleTap(e) {
+                    const node = this._getNodeFromCoord(e.clientX, e.clientY);
+                    if (!node) {
+                        this.selectedNodeId = null;
+                        this._redraw();
+                        return;
+                    }
+                    
+                    const clickedId = node.id;
+                    
+                    // اگر جزیره‌ای انتخاب نشده بود
+                    if (this.selectedNodeId === null) {
+                        this.selectedNodeId = clickedId;
+                        this._setStatus(`جزیره ${node.val} انتخاب شد. حالا جزیره مجاور را انتخاب کنید.`);
+                        this._redraw();
+                        return;
+                    }
+                    
+                    // اگر روی همان جزیره کلیک شد: لغو انتخاب
+                    if (this.selectedNodeId === clickedId) {
+                        this.selectedNodeId = null;
+                        this._setStatus('انتخاب لغو شد.');
+                        this._redraw();
+                        return;
+                    }
+                    
+                    // جزیره دوم: تلاش برای تغییر پل
+                    const id1 = this.selectedNodeId;
+                    const id2 = clickedId;
+                    
+                    // بررسی مجاز بودن اتصال
+                    const edge = this.allowedEdges.find(e => 
+                        (e.id1 === id1 && e.id2 === id2) || (e.id1 === id2 && e.id2 === id1)
+                    );
+                    
+                    if (!edge) {
+                        this._setStatus('⛔ این دو جزیره به هم متصل نیستند (باید هم‌ردیف یا هم‌ستون و بدون مانع باشند)');
+                        this.selectedNodeId = null;
+                        this._redraw();
+                        return;
+                    }
+                    
+                    // دریافت تعداد پل فعلی
+                    const key = this._getBridgeKey(id1, id2);
+                    const current = this.bridges.get(key) || 0;
+                    
+                    // تلاش برای تغییر (چرخش 0→1→2→0)
+                    let newCount = (current + 1) % 3;
+                    
+                    // قبل از اعمال، بررسی محدودیت‌های جزیره و تقاطع
+                    if (newCount > 0) {
+                        // بررسی تقاطع با پل‌های موجود
+                        if (this._wouldCrossExistingBridge(id1, id2)) {
+                            this._setStatus('⛔ پل‌ها نباید یکدیگر را قطع کنند');
+                            this.selectedNodeId = null;
+                            this._redraw();
+                            return;
+                        }
+                        
+                        // بررسی ظرفیت جزایر (فعلا فقط هشدار در بررسی نهایی، ولی اینجا می‌توان محدود کرد)
+                        // اما برای راحتی، اجازه موقت می‌دهیم و در بررسی خطا می‌گیرد.
+                    }
+                    
+                    // اعمال تغییر
+                    if (newCount === 0) {
+                        this.bridges.delete(key);
+                    } else {
+                        this.bridges.set(key, newCount);
+                    }
+                    
+                    // اگر پازل حل شد، امتیاز افزوده شود (در بررسی نهایی هم انجام می‌شود)
+                    this.solvedFlag = false; 
+                    
+                    this.selectedNodeId = null;
+                    this._setStatus(`پل ${newCount === 0 ? 'حذف' : newCount} بین جزایر برقرار شد`);
+                    this._redraw();
+                    this._saveToStorage(); // ذخیره خودکار
+                }
+
+                _wouldCrossExistingBridge(idA, idB) {
+                    const nodeA = this.nodes.find(n => n.id === idA);
+                    const nodeB = this.nodes.find(n => n.id === idB);
+                    const x1 = nodeA.col, y1 = nodeA.row;
+                    const x2 = nodeB.col, y2 = nodeB.row;
+                    
+                    // پل جدید افقی یا عمودی است
+                    const isHorizontal = (y1 === y2);
+                    
+                    for (let [key, count] of this.bridges.entries()) {
+                        if (count === 0) continue;
+                        const [id1, id2] = key.split('-').map(Number);
+                        const n1 = this.nodes.find(n => n.id === id1);
+                        const n2 = this.nodes.find(n => n.id === id2);
+                        const x3 = n1.col, y3 = n1.row;
+                        const x4 = n2.col, y4 = n2.row;
+                        
+                        const isOtherHorizontal = (y3 === y4);
+                        
+                        // اگر موازی باشند تقاطع ندارند (مگر روی هم بیفتند که در هاشی مجاز نیست اما بررسی نمی‌کنیم)
+                        if (isHorizontal === isOtherHorizontal) continue;
+                        
+                        // بررسی تقاطع دو پل عمود بر هم
+                        if (isHorizontal) {
+                            // پل جدید افقی: y ثابت = y1
+                            const minX = Math.min(x1, x2);
+                            const maxX = Math.max(x1, x2);
+                            const otherMinY = Math.min(y3, y4);
+                            const otherMaxY = Math.max(y3, y4);
+                            const otherX = x3; // ثابت
+                            
+                            if (otherX > minX && otherX < maxX && y1 > otherMinY && y1 < otherMaxY) {
+                                return true;
+                            }
+                        } else {
+                            // پل جدید عمودی
+                            const minY = Math.min(y1, y2);
+                            const maxY = Math.max(y1, y2);
+                            const otherMinX = Math.min(x3, x4);
+                            const otherMaxX = Math.max(x3, x4);
+                            const otherY = y3;
+                            
+                            if (otherY > minY && otherY < maxY && x1 > otherMinX && x1 < otherMaxX) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                }
+
+                _getBridgeKey(id1, id2) {
+                    return id1 < id2 ? `${id1}-${id2}` : `${id2}-${id1}`;
+                }
+
+                // ---------- ترسیم ----------
+                _redraw() {
+                    const ctx = this.ctx;
+                    const w = this.canvas.width;
+                    const h = this.canvas.height;
+                    ctx.clearRect(0, 0, w, h);
+                    
+                    const cell = this.cellSize;
+                    
+                    // رسم شبکه کم‌رنگ
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#cbbaa8';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i <= this.cols; i++) {
+                        ctx.moveTo(i * cell, 0);
+                        ctx.lineTo(i * cell, h);
+                    }
+                    for (let i = 0; i <= this.rows; i++) {
+                        ctx.moveTo(0, i * cell);
+                        ctx.lineTo(w, i * cell);
+                    }
+                    ctx.stroke();
+                    
+                    // رسم پل‌ها
+                    for (let [key, count] of this.bridges.entries()) {
+                        if (count === 0) continue;
+                        const [id1, id2] = key.split('-').map(Number);
+                        const n1 = this.nodes.find(n => n.id === id1);
+                        const n2 = this.nodes.find(n => n.id === id2);
+                        const x1 = (n1.col + 0.5) * cell;
+                        const y1 = (n1.row + 0.5) * cell;
+                        const x2 = (n2.col + 0.5) * cell;
+                        const y2 = (n2.row + 0.5) * cell;
+                        
+                        const angle = Math.atan2(y2 - y1, x2 - x1);
+                        const perp = angle + Math.PI/2;
+                        const offset = cell * 0.12;
+                        
+                        ctx.lineCap = 'round';
+                        ctx.lineWidth = cell * 0.12;
+                        ctx.strokeStyle = '#6b4f3a';
+                        
+                        for (let i = 0; i < count; i++) {
+                            const shift = (i === 0) ? -offset : offset;
+                            const dx = Math.cos(perp) * shift;
+                            const dy = Math.sin(perp) * shift;
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(x1 + dx, y1 + dy);
+                            ctx.lineTo(x2 + dx, y2 + dy);
+                            ctx.stroke();
+                        }
+                    }
+                    
+                    // رسم جزایر
+                    for (const node of this.nodes) {
+                        const x = (node.col + 0.5) * cell;
+                        const y = (node.row + 0.5) * cell;
+                        const radius = this.nodeRadius;
+                        
+                        // دایره پس‌زمینه
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, 2*Math.PI);
+                        ctx.fillStyle = '#f5e7d9';
+                        ctx.shadowColor = '#bba58c';
+                        ctx.shadowBlur = 8;
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                        ctx.strokeStyle = '#7c5f4b';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                        
+                        // حلقه انتخاب
+                        if (this.selectedNodeId === node.id) {
+                            ctx.beginPath();
+                            ctx.arc(x, y, radius+6, 0, 2*Math.PI);
+                            ctx.strokeStyle = '#c2491f';
+                            ctx.lineWidth = 4;
+                            ctx.stroke();
+                        }
+                        
+                        // عدد
+                        ctx.font = `bold ${cell*0.38}px 'Segoe UI', 'Vazirmatn', sans-serif`;
+                        ctx.fillStyle = '#2b1b0f';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(node.val, x, y);
+                    }
+                    
+                    // به‌روزرسانی نمایش امتیاز
+                    this.scoreDisplay.textContent = `🏆 ${this.score}`;
+                }
+
+                // ---------- بررسی صحت راه حل ----------
+                _checkSolution() {
+                    // ۱. بررسی تعداد پل‌های هر جزیره
+                    const degree = new Map();
+                    for (const node of this.nodes) degree.set(node.id, 0);
+                    
+                    for (let [key, count] of this.bridges.entries()) {
+                        const [id1, id2] = key.split('-').map(Number);
+                        degree.set(id1, degree.get(id1) + count);
+                        degree.set(id2, degree.get(id2) + count);
+                    }
+                    
+                    for (const node of this.nodes) {
+                        if (degree.get(node.id) !== node.val) {
+                            this._setStatus(`❌ جزیره (${node.row+1},${node.col+1}) به ${degree.get(node.id)} پل وصل است، باید ${node.val} باشد.`);
+                            return false;
+                        }
+                    }
+                    
+                    // ۲. بررسی پیوستگی (همه جزایر به هم متصل باشند)
+                    if (!this._isConnected()) {
+                        this._setStatus('❌ همه جزایر به هم متصل نیستند.');
+                        return false;
+                    }
+                    
+                    // ۳. بررسی عدم تقاطع (قبلاً در هنگام افزودن کنترل شده، اما دوباره چک می‌کنیم)
+                    if (this._hasAnyCrossing()) {
+                        this._setStatus('❌ پل‌ها یکدیگر را قطع کرده‌اند.');
+                        return false;
+                    }
+                    
+                    // موفقیت
+                    this._setStatus('🎉 تبریک! معما حل شد!');
+                    if (!this.solvedFlag) {
+                        this.score += 1;
+                        this.solvedFlag = true;
+                        this.scoreDisplay.textContent = `🏆 ${this.score}`;
+                        this._saveToStorage();
+                    }
+                    return true;
+                }
+
+                _isConnected() {
+                    if (this.nodes.length === 0) return true;
+                    const adj = new Map();
+                    for (const node of this.nodes) adj.set(node.id, []);
+                    for (let [key, count] of this.bridges.entries()) {
+                        if (count === 0) continue;
+                        const [id1, id2] = key.split('-').map(Number);
+                        adj.get(id1).push(id2);
+                        adj.get(id2).push(id1);
+                    }
+                    const visited = new Set();
+                    const stack = [this.nodes[0].id];
+                    while (stack.length) {
+                        const id = stack.pop();
+                        if (visited.has(id)) continue;
+                        visited.add(id);
+                        for (const nb of adj.get(id)) {
+                            if (!visited.has(nb)) stack.push(nb);
+                        }
+                    }
+                    return visited.size === this.nodes.length;
+                }
+
+                _hasAnyCrossing() {
+                    const bridgeList = [];
+                    for (let [key, count] of this.bridges.entries()) {
+                        if (count === 0) continue;
+                        const [id1, id2] = key.split('-').map(Number);
+                        bridgeList.push({ id1, id2 });
+                    }
+                    for (let i = 0; i < bridgeList.length; i++) {
+                        for (let j = i+1; j < bridgeList.length; j++) {
+                            const b1 = bridgeList[i];
+                            const b2 = bridgeList[j];
+                            const n1a = this.nodes.find(n => n.id === b1.id1);
+                            const n1b = this.nodes.find(n => n.id === b1.id2);
+                            const n2a = this.nodes.find(n => n.id === b2.id1);
+                            const n2b = this.nodes.find(n => n.id === b2.id2);
+                            
+                            const x1 = n1a.col, y1 = n1a.row, x2 = n1b.col, y2 = n1b.row;
+                            const x3 = n2a.col, y3 = n2a.row, x4 = n2b.col, y4 = n2b.row;
+                            
+                            const horiz1 = (y1 === y2);
+                            const horiz2 = (y3 === y4);
+                            if (horiz1 === horiz2) continue;
+                            
+                            if (horiz1) {
+                                const minX = Math.min(x1,x2), maxX = Math.max(x1,x2);
+                                const otherMinY = Math.min(y3,y4), otherMaxY = Math.max(y3,y4);
+                                if (x3 > minX && x3 < maxX && y1 > otherMinY && y1 < otherMaxY) return true;
+                            } else {
+                                const minY = Math.min(y1,y2), maxY = Math.max(y1,y2);
+                                const otherMinX = Math.min(x3,x4), otherMaxX = Math.max(x3,x4);
+                                if (y3 > minY && y3 < maxY && x1 > otherMinX && x1 < otherMaxX) return true;
+                            }
+                        }
+                    }
+                    return false;
+                }
+
+                _setStatus(msg) {
+                    this.statusDiv.textContent = msg;
+                }
+
+                _resetPuzzle() {
+                    this.bridges.clear();
+                    this.selectedNodeId = null;
+                    this.solvedFlag = false;
+                    this._setStatus('صفحه از نو. شروع کنید!');
+                    this._redraw();
+                    this._saveToStorage();
+                }
+
+                // ---------- ذخیره و بازیابی در localStorage ----------
+                _saveToStorage() {
+                    const state = {
+                        bridges: Array.from(this.bridges.entries()),
+                        score: this.score,
+                        solvedFlag: this.solvedFlag,
+                        puzzle: this.puzzle  // ذخیره پازل برای اطمینان
+                    };
+                    localStorage.setItem('hashiGameSave', JSON.stringify(state));
+                }
+
+                _loadFromStorage() {
+                    const saved = localStorage.getItem('hashiGameSave');
+                    if (!saved) return;
+                    try {
+                        const state = JSON.parse(saved);
+                        this.bridges = new Map(state.bridges);
+                        this.score = state.score || 0;
+                        this.solvedFlag = state.solvedFlag || false;
+                        // در صورت نیاز puzzle بررسی شود (اما ما از پیش‌فرض استفاده می‌کنیم)
+                        this._setStatus('بازی از حافظه بارگذاری شد.');
+                    } catch (e) {
+                        console.warn('خطا در بارگذاری');
+                    }
+                }
+            }
+
+            // راه‌اندازی بازی در container با شناسه hashi-game
+            window.addEventListener('DOMContentLoaded', () => {
+                new HashiGame('hashi-game');
+            });
+        })();
+    </script>
+</body>
+</html>

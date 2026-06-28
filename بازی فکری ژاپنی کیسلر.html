@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>بازی فکری ژاپنی کیسلر (Kaisler)</title>
+  <style>
+    /* === CSS ریست و فونت فارسی === */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(145deg, #1e2b2c 0%, #0f1a1b 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Vazirmatn', 'Segoe UI', system-ui, sans-serif;
+      padding: 16px;
+      margin: 0;
+    }
+
+    /* کانتینر اصلی بازی – کاربر می‌تواند فقط از این id استفاده کند */
+    #kaisler-game {
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+      background: rgba(255, 248, 235, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 48px;
+      box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+      padding: 24px 20px 30px;
+      border: 1px solid #d4b68a;
+      transition: all 0.2s;
+    }
+
+    /* === تایپوگرافی و رنگ‌های سنتی ژاپنی === */
+    .game-title {
+      font-size: 2.4rem;
+      font-weight: 700;
+      text-align: center;
+      color: #3a281f;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+      text-shadow: 2px 2px 0 #e9dacb;
+      word-break: keep-all;
+    }
+
+    .game-subtitle {
+      text-align: center;
+      color: #6b4e3a;
+      margin-bottom: 20px;
+      font-weight: 400;
+      border-bottom: 2px dashed #c9aa8b;
+      padding-bottom: 12px;
+    }
+
+    /* راهنمای بازی */
+    .guide-box {
+      background: #e7d9cc;
+      border-radius: 28px;
+      padding: 16px 18px;
+      margin-bottom: 22px;
+      border: 1px solid #b39274;
+      box-shadow: inset 0 1px 4px rgba(62, 40, 20, 0.1);
+    }
+
+    .guide-title {
+      font-weight: 600;
+      color: #2c1e12;
+      margin-bottom: 8px;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .guide-text {
+      color: #3f2c1c;
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    /* امتیاز و کنترل‌ها */
+    .stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      background: #cfbcab;
+      padding: 10px 16px;
+      border-radius: 60px;
+      margin-bottom: 24px;
+      box-shadow: 0 6px 0 #7a5e4b, inset 0 2px 6px #fff3e6;
+    }
+
+    .score-box {
+      background: #1e2f2b;
+      color: #f3de8a;
+      padding: 6px 20px;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 1.3rem;
+      box-shadow: inset 0 -2px 0 #5f7a6b, 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .moves-box {
+      background: #4a3729;
+      color: #f0dbb0;
+      padding: 6px 20px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      background: #f3e9dd;
+      border: none;
+      border-bottom: 4px solid #8f6e55;
+      color: #2d1f14;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 36px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: all 0.1s ease;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:active {
+      transform: translateY(2px);
+      border-bottom-width: 2px;
+    }
+
+    .btn.primary {
+      background: #b48c5c;
+      border-bottom-color: #5e3e28;
+      color: white;
+      box-shadow: 0 4px 0 #4f3624;
+    }
+
+    /* جدول بازی */
+    .board-container {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0 10px;
+    }
+
+    .kaisler-grid {
+      display: grid;
+      gap: 8px;
+      background: #ab8c74;
+      padding: 20px 20px;
+      border-radius: 36px;
+      box-shadow: inset 0 0 0 2px #5e3f2c, 0 16px 20px -8px rgba(0,0,0,0.4);
+      border: 1px solid #e6cbb0;
+    }
+
+    /* سلول‌های عددی */
+    .cell {
+      width: clamp(52px, 12vw, 72px);
+      height: clamp(52px, 12vw, 72px);
+      background: #fcf3e9;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.8rem, 6vw, 2.4rem);
+      font-weight: 700;
+      color: #1e3d3b;
+      box-shadow: inset 0 -6px 0 #b7a088, 0 4px 8px rgba(0,0,0,0.15);
+      border: 2px solid #ebd5bf;
+      transition: 0.1s;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cell:active {
+      transform: scale(0.96);
+      box-shadow: inset 0 -2px 0 #9e8874;
+    }
+
+    /* سلول‌های راهنما (جمع سطر/ستون) */
+    .clue-cell {
+      background: #2e3b37;
+      box-shadow: inset 0 -4px 0 #141f1c, 0 4px 6px rgba(0,0,0,0.2);
+      border: 2px solid #7f9a8a;
+      color: #ffecb3;
+      font-size: clamp(1.3rem, 5vw, 1.8rem);
+      font-weight: bold;
+      cursor: default;
+    }
+
+    .clue-cell:active {
+      transform: none;
+      box-shadow: inset 0 -4px 0 #141f1c, 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    /* پیام وضعیت */
+    .message-area {
+      text-align: center;
+      margin: 18px 0 6px;
+      min-height: 40px;
+      font-weight: 500;
+      color: #274936;
+    }
+
+    /* واکنش‌گرایی بیشتر */
+    @media (max-width: 480px) {
+      #kaisler-game {
+        padding: 16px 12px 20px;
+      }
+      .game-title {
+        font-size: 2rem;
+      }
+      .btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+      }
+      .cell {
+        width: 48px;
+        height: 48px;
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- این div با شناسه kaisler-game محتوای کامل بازی را در خود جای می‌دهد -->
+  <div id="kaisler-game"></div>
+
+  <script type="module">
+    /**
+     * 🎌 Kaisler (کیسلر) - بازی فکری ژاپنی
+     * استانداردهای کدنویسی ۲۰۲۶: ES Modules, Private Fields, Async/Await
+     * ذخیره‌سازی در localStorage + طراحی واکنش‌گرا
+     */
+    
+    // ---------- کلاس اصلی بازی ----------
+    class KaislerGame {
+      // فیلدهای خصوصی (ES2022+)
+      #size;
+      #board;
+      #rowClues;
+      #colClues;
+      #moves;
+      #score;
+      #gameContainer;
+      #gridElement;
+      #messageDiv;
+      #scoreDisplay;
+      #movesDisplay;
+      #storageKey = 'kaisler_save_2026';
+      
+      constructor(containerId = 'kaisler-game') {
+        this.#size = 4; // جدول 4x4
+        this.#gameContainer = document.getElementById(containerId);
+        if (!this.#gameContainer) {
+          console.error('ظرف بازی با شناسه مشخص شده یافت نشد.');
+          return;
+        }
+        
+        // مقادیر اولیه
+        this.#moves = 0;
+        this.#score = 0;
+        
+        // تلاش برای بارگذاری از localStorage
+        this.#loadGame().then(() => {
+          this.#render();
+          this.#attachEvents();
+        });
+      }
+      
+      // مقداردهی اولیه یک پازل جدید (با اهداف مشخص)
+      #initNewPuzzle() {
+        // اهداف سطرها (جمع مورد نظر)
+        this.#rowClues = [9, 12, 8, 15];
+        // اهداف ستون‌ها
+        this.#colClues = [10, 11, 14, 9];
+        
+        // مقداردهی اولیه تخته با اعداد 1 (بازیکن می‌تواند تغییر دهد)
+        this.#board = Array(this.#size).fill().map(() => Array(this.#size).fill(1));
+        
+        // اطمینان از معتبر بودن پازل اولیه (جمع‌ها در محدوده ممکن)
+        // (اختیاری: می‌توان پازل را قابل حل نگه داشت)
+        this.#moves = 0;
+        this.#updateScore();
+      }
+      
+      // محاسبه امتیاز بر اساس پیشرفت
+      #updateScore() {
+        let correctCells = 0;
+        for (let r = 0; r < this.#size; r++) {
+          const rowSum = this.#board[r].reduce((a, b) => a + b, 0);
+          if (rowSum === this.#rowClues[r]) correctCells += this.#size;
+          
+          let colSum = 0;
+          for (let c = 0; c < this.#size; c++) colSum += this.#board[c][r];
+          if (colSum === this.#colClues[r]) correctCells += this.#size;
+        }
+        // امتیاز = تعداد سطر/ستون‌های کامل * ۱۰ + پاداش حرکات کمتر
+        this.#score = correctCells * 5 + Math.max(0, 100 - this.#moves);
+      }
+      
+      // بررسی برد
+      #checkWin() {
+        for (let i = 0; i < this.#size; i++) {
+          const rowSum = this.#board[i].reduce((s, v) => s + v, 0);
+          if (rowSum !== this.#rowClues[i]) return false;
+          
+          const colSum = this.#board.reduce((s, row) => s + row[i], 0);
+          if (colSum !== this.#colClues[i]) return false;
+        }
+        return true;
+      }
+      
+      // عملیات کلیک روی سلول (افزایش عدد 1 تا 9)
+      #handleCellClick(row, col) {
+        return () => {
+          if (this.#checkWin()) {
+            this.#showMessage('🎉 شما برنده شدید! بازی جدید آغاز کنید.', 'win');
+            return;
+          }
+          
+          const current = this.#board[row][col];
+          this.#board[row][col] = current === 9 ? 1 : current + 1;
+          this.#moves++;
+          this.#updateScore();
+          
+          this.#renderGrid();
+          this.#updateUI();
+          
+          // ذخیره خودکار
+          this.#saveGame();
+          
+          if (this.#checkWin()) {
+            this.#showMessage('✨ آفرین! معمای کیسلر حل شد! ✨', 'win');
+            this.#updateUI();
+            this.#saveGame(); // ذخیره پیروزی
+          } else {
+            this.#showMessage('', '');
+          }
+        };
+      }
+      
+      // نمایش پیام
+      #showMessage(text, type) {
+        if (this.#messageDiv) {
+          this.#messageDiv.textContent = text;
+          this.#messageDiv.style.color = type === 'win' ? '#1f6d4c' : '#4d2f1b';
+        }
+      }
+      
+      // بروزرسانی امتیاز و حرکت در UI
+      #updateUI() {
+        if (this.#scoreDisplay) this.#scoreDisplay.textContent = this.#score;
+        if (this.#movesDisplay) this.#movesDisplay.textContent = this.#moves;
+      }
+      
+      // رسم کامل رابط کاربری
+      #render() {
+        this.#gameContainer.innerHTML = '';
+        
+        // عنوان
+        const title = document.createElement('h1');
+        title.className = 'game-title';
+        title.textContent = '🎋 کیسلر · Kaisler';
+        this.#gameContainer.appendChild(title);
+        
+        const sub = document.createElement('div');
+        sub.className = 'game-subtitle';
+        sub.textContent = 'پازل اعداد ژاپنی · کاکورو مدرن';
+        this.#gameContainer.appendChild(sub);
+        
+        // راهنمای فارسی
+        const guide = document.createElement('div');
+        guide.className = 'guide-box';
+        guide.innerHTML = `
+          <div class="guide-title">📖 راهنمای کیسلر</div>
+          <div class="guide-text">
+            🔹 روی هر خانه کلیک کنید تا عدد آن (۱ تا ۹) افزایش یابد.<br>
+            🔹 هدف: مجموع اعداد هر سطر با عدد سمت چپ و مجموع هر ستون با عدد بالای آن برابر شود.<br>
+            🔹 بازی به‌صورت خودکار ذخیره می‌شود. با دکمه‌های «جدید» یا «بازنشانی» شروع تازه کنید.
+          </div>
+        `;
+        this.#gameContainer.appendChild(guide);
+        
+        // نوار امتیاز
+        const stats = document.createElement('div');
+        stats.className = 'stats-bar';
+        stats.innerHTML = `
+          <div class="score-box">🏆 <span id="kaisler-score">${this.#score}</span></div>
+          <div class="moves-box">🔄 حرکت: <span id="kaisler-moves">${this.#moves}</span></div>
+        `;
+        this.#gameContainer.appendChild(stats);
+        this.#scoreDisplay = document.getElementById('kaisler-score');
+        this.#movesDisplay = document.getElementById('kaisler-moves');
+        
+        // دکمه‌ها
+        const btnPanel = document.createElement('div');
+        btnPanel.className = 'btn-group';
+        btnPanel.innerHTML = `
+          <button class="btn primary" id="kaisler-new">🆕 بازی جدید</button>
+          <button class="btn" id="kaisler-reset">🔄 بازنشانی</button>
+          <button class="btn" id="kaisler-save">💾 ذخیره دستی</button>
+        `;
+        this.#gameContainer.appendChild(btnPanel);
+        
+        // محل پیام
+        this.#messageDiv = document.createElement('div');
+        this.#messageDiv.className = 'message-area';
+        this.#gameContainer.appendChild(this.#messageDiv);
+        
+        // جدول
+        const boardWrapper = document.createElement('div');
+        boardWrapper.className = 'board-container';
+        this.#gridElement = document.createElement('div');
+        this.#gridElement.className = 'kaisler-grid';
+        this.#gridElement.style.gridTemplateColumns = `auto repeat(${this.#size}, 1fr)`;
+        boardWrapper.appendChild(this.#gridElement);
+        this.#gameContainer.appendChild(boardWrapper);
+        
+        this.#renderGrid();
+        
+        // اتصال رویدادها
+        document.getElementById('kaisler-new')?.addEventListener('click', () => this.#newGame());
+        document.getElementById('kaisler-reset')?.addEventListener('click', () => this.#resetGame());
+        document.getElementById('kaisler-save')?.addEventListener('click', () => this.#saveGame(true));
+      }
+      
+      // رسم شبکه با راهنماها
+      #renderGrid() {
+        this.#gridElement.innerHTML = '';
+        
+        // سلول خالی گوشه بالا-چپ
+        const corner = document.createElement('div');
+        corner.className = 'cell clue-cell';
+        corner.textContent = '⚡';
+        corner.style.background = '#1f2c28';
+        this.#gridElement.appendChild(corner);
+        
+        // راهنماهای ستون‌ها
+        for (let c = 0; c < this.#size; c++) {
+          const clue = document.createElement('div');
+          clue.className = 'cell clue-cell';
+          clue.textContent = this.#colClues[c];
+          this.#gridElement.appendChild(clue);
+        }
+        
+        // سطرها
+        for (let r = 0; r < this.#size; r++) {
+          // راهنمای سطر
+          const rowClue = document.createElement('div');
+          rowClue.className = 'cell clue-cell';
+          rowClue.textContent = this.#rowClues[r];
+          this.#gridElement.appendChild(rowClue);
+          
+          // سلول‌های عددی
+          for (let c = 0; c < this.#size; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.textContent = this.#board[r][c];
+            cell.addEventListener('click', this.#handleCellClick(r, c));
+            this.#gridElement.appendChild(cell);
+          }
+        }
+      }
+      
+      #attachEvents() {
+        // رویدادها پس از رندر متصل می‌شوند
+      }
+      
+      // بازی جدید
+      #newGame() {
+        this.#initNewPuzzle();
+        this.#renderGrid();
+        this.#updateUI();
+        this.#showMessage('🎯 پازل جدید آماده است!', '');
+        this.#saveGame();
+      }
+      
+      // بازنشانی به حالت اولیه پازل فعلی
+      #resetGame() {
+        this.#board = Array(this.#size).fill().map(() => Array(this.#size).fill(1));
+        this.#moves = 0;
+        this.#updateScore();
+        this.#renderGrid();
+        this.#updateUI();
+        this.#showMessage('🔄 جدول به حالت اول برگشت.', '');
+        this.#saveGame();
+      }
+      
+      // === ذخیره و بازیابی با localStorage (Async مطابق استاندارد ۲۰۲۶) ===
+      async #saveGame(showToast = false) {
+        try {
+          const saveData = {
+            board: this.#board,
+            rowClues: this.#rowClues,
+            colClues: this.#colClues,
+            moves: this.#moves,
+            score: this.#score,
+            size: this.#size,
+            timestamp: Date.now()
+          };
+          localStorage.setItem(this.#storageKey, JSON.stringify(saveData));
+          if (showToast) this.#showMessage('💾 بازی ذخیره شد.', '');
+        } catch (e) {
+          console.warn('ذخیره‌سازی ناموفق', e);
+        }
+      }
+      
+      async #loadGame() {
+        try {
+          const saved = localStorage.getItem(this.#storageKey);
+          if (saved) {
+            const data = JSON.parse(saved);
+            // اعتبارسنجی
+            if (data.size === this.#size && data.board && data.rowClues) {
+              this.#board = data.board;
+              this.#rowClues = data.rowClues;
+              this.#colClues = data.colClues;
+              this.#moves = data.moves ?? 0;
+              this.#score = data.score ?? 0;
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('بارگذاری ذخیره ناموفق، پازل جدید ساخته می‌شود.');
+        }
+        // اگر ذخیره‌ای نبود یا خراب بود
+        this.#initNewPuzzle();
+      }
+    }
+    
+    // راه‌اندازی بازی به محض بارگذاری DOM
+    window.addEventListener('DOMContentLoaded', () => {
+      // اطمینان از وجود المنت
+      if (document.getElementById('kaisler-game')) {
+        new KaislerGame('kaisler-game');
+      } else {
+        console.warn('المنتی با id="kaisler-game" پیدا نشد. بازی ساخته نشد.');
+      }
+    });
+    
+    // اگر کاربر div را بعداً اضافه کند، می‌تواند به صورت دستی نمونه بسازد.
+    // اما ما در DOMContentLoaded اقدام می‌کنیم.
+  </script>
+</body>
+</html>

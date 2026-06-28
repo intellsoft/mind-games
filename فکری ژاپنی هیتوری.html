@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>بازی فکری هیتوری (Hitori) - معمای اعداد ژاپنی</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none; /* جلوگیری از انتخاب متن در کلیک سریع */
+        }
+
+        body {
+            background: linear-gradient(145deg, #e0eafc 0%, #cfdef3 100%);
+            font-family: 'Segoe UI', 'Roboto', 'Vazirmatn', system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* محفظه اصلی بازی که با هر id دلخواه قابل نصب است */
+        .hitori-game-container {
+            max-width: 750px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(2px);
+            border-radius: 3rem;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        /* سربرگ بازی */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.8rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #2c3e66;
+        }
+        .title-area h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            background: linear-gradient(135deg, #1e3c72, #2b4c7c);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .title-area p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: #2c3e66;
+            font-weight: 500;
+        }
+        .score-panel {
+            background: #1e2f41;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            color: #f9eec1;
+            font-weight: bold;
+            font-size: 1.3rem;
+            box-shadow: inset 0 -1px 0 #3e5a77, 0 5px 10px rgba(0,0,0,0.1);
+        }
+        .score-panel span {
+            font-size: 1.9rem;
+            margin-left: 5px;
+            color: #ffd966;
+        }
+
+        /* نوار ابزار */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.7rem;
+            margin: 1.5rem 0 1.2rem;
+        }
+        button {
+            background: #2c3e66;
+            border: none;
+            color: white;
+            font-weight: bold;
+            padding: 0.6rem 1.2rem;
+            border-radius: 3rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        button:active {
+            transform: scale(0.96);
+        }
+        button.reset-btn { background: #5a3e2b; }
+        button.check-btn { background: #2d6a4f; }
+        button.next-btn { background: #1f6392; }
+        button.newgame-btn { background: #9e2a2f; }
+        button:hover {
+            filter: brightness(1.08);
+            transform: translateY(-2px);
+        }
+
+        /* جدول بازی - نمای گرید رسپانسیو */
+        .hitori-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(55px, 85px));
+            justify-content: center;
+            gap: 8px;
+            background-color: #fef9e8;
+            padding: 1.5rem 0.5rem;
+            border-radius: 2rem;
+            margin: 0.5rem 0;
+            box-shadow: inset 0 0 0 2px #fff8, 0 12px 24px rgba(0,0,0,0.1);
+        }
+        /* سلول‌ها */
+        .cell {
+            aspect-ratio: 1 / 1;
+            background: #fffcf0;
+            border-radius: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.7rem;
+            font-weight: 700;
+            font-family: monospace;
+            color: #1f3a4b;
+            cursor: pointer;
+            transition: all 0.12s linear;
+            box-shadow: 0 5px 0 #bba88a;
+            border: 1px solid #e9dbbc;
+        }
+        .cell.black {
+            background: #2d2f36;
+            color: #e3c9a0;
+            text-decoration: line-through;
+            text-decoration-thickness: 3px;
+            text-decoration-color: #ffaa66;
+            box-shadow: inset 0 0 0 1px #6b5a44, 0 2px 5px rgba(0,0,0,0.2);
+            transform: scale(0.97);
+        }
+        .cell:active {
+            transform: scale(0.96);
+        }
+        /* پیام وضعیت */
+        .message-area {
+            background: #e9f0f5;
+            border-radius: 2rem;
+            padding: 0.7rem;
+            margin: 1rem 0 0;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1f3a4b;
+            border-right: 6px solid #2c3e66;
+        }
+        .rules {
+            font-size: 0.75rem;
+            background: #ece4d7;
+            padding: 0.8rem;
+            border-radius: 1.5rem;
+            margin-top: 1rem;
+            color: #2c3e3f;
+            text-align: center;
+        }
+        @media (max-width: 550px) {
+            .hitori-game-container { padding: 1rem; }
+            .hitori-grid { gap: 5px; grid-template-columns: repeat(5, minmax(48px, 65px)); }
+            .cell { font-size: 1.3rem; border-radius: 0.9rem; }
+            button { padding: 0.4rem 0.9rem; font-size: 0.75rem; }
+            .score-panel { font-size: 1rem; }
+            .score-panel span { font-size: 1.5rem; }
+        }
+        @media (max-width: 420px) {
+            .hitori-grid { gap: 4px; grid-template-columns: repeat(5, minmax(42px, 55px)); }
+            .cell { font-size: 1rem; }
+        }
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            margin-top: 1rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+<!-- هر div دلخواه با id مشخص، بازی درون آن رندر می‌شود -->
+<div id="hitoriRoot" class="hitori-game-container"></div>
+
+<script>
+    (function(){
+        // ---------- مجموعه پازل‌های هیتوری 5x5 (اعداد تکراری دار، استاندارد) ----------
+        const PUZZLES = [
+            {   // پازل 0 : چالش ملایم
+                name: "باغ ساکورا",
+                grid: [
+                    [2, 3, 1, 4, 2],
+                    [4, 1, 3, 2, 5],
+                    [3, 2, 5, 1, 4],
+                    [1, 5, 4, 3, 2],
+                    [5, 4, 2, 5, 3]
+                ]
+            },
+            {   // پازل 1 : جنگل بامبو
+                name: "جنگل بامبو",
+                grid: [
+                    [4, 2, 5, 3, 4],
+                    [2, 5, 3, 4, 1],
+                    [5, 3, 1, 2, 5],
+                    [3, 1, 4, 5, 2],
+                    [1, 4, 2, 3, 3]
+                ]
+            },
+            {   // پازل 2 : کوه فوجی
+                name: "کوه فوجی",
+                grid: [
+                    [3, 5, 2, 4, 3],
+                    [5, 2, 4, 3, 1],
+                    [2, 4, 1, 5, 2],
+                    [4, 1, 3, 2, 5],
+                    [1, 3, 5, 1, 4]
+                ]
+            }
+        ];
+
+        const SIZE = 5;   // 5x5 ثابت
+
+        // ---------- وضعیت اصلی بازی ----------
+        let currentPuzzleIndex = 0;           // 0-based
+        let blackCells = Array(SIZE).fill().map(() => Array(SIZE).fill(false)); // true = سیاه (حذف شده)
+        let totalScore = 0;                   // تعداد پازل‌های حل شده منحصر‌به‌فرد
+        let puzzlesSolvedStatus = [false, false, false]; // هر پازل آیا قبلاً حل شده؟
+
+        // المان‌های DOM (پس از mount)
+        let containerEl = null;
+        let gridContainer = null;
+        let messageDiv = null;
+        let scoreSpan = null;
+        let puzzleNameSpan = null;
+
+        // ---------- توابع کمکی ذخیره و بارگذاری (localStorage) ----------
+        function saveGameToLocalStorage() {
+            const saveData = {
+                currentPuzzleIndex: currentPuzzleIndex,
+                blackCells: blackCells,
+                totalScore: totalScore,
+                puzzlesSolvedStatus: puzzlesSolvedStatus,
+                version: "2026-hitori-v1"
+            };
+            localStorage.setItem("HitoriGameSave", JSON.stringify(saveData));
+        }
+
+        function loadGameFromLocalStorage() {
+            const raw = localStorage.getItem("HitoriGameSave");
+            if (!raw) return false;
+            try {
+                const data = JSON.parse(raw);
+                if (data.version && data.currentPuzzleIndex !== undefined && data.blackCells && data.totalScore !== undefined && data.puzzlesSolvedStatus) {
+                    currentPuzzleIndex = data.currentPuzzleIndex;
+                    // sanity check index
+                    if (currentPuzzleIndex >= PUZZLES.length) currentPuzzleIndex = 0;
+                    blackCells = data.blackCells;
+                    totalScore = data.totalScore;
+                    puzzlesSolvedStatus = data.puzzlesSolvedStatus;
+                    // تطابق ابعاد blackCells
+                    if (!blackCells || blackCells.length !== SIZE) {
+                        resetBlackCells();
+                    } else {
+                        for(let i=0;i<SIZE;i++) if(blackCells[i]?.length !== SIZE) resetBlackCells();
+                    }
+                    if (!puzzlesSolvedStatus || puzzlesSolvedStatus.length !== PUZZLES.length) {
+                        puzzlesSolvedStatus = Array(PUZZLES.length).fill(false);
+                        totalScore = puzzlesSolvedStatus.filter(v=>v===true).length;
+                    }
+                    return true;
+                }
+            } catch(e) { console.warn(e); }
+            return false;
+        }
+
+        function resetBlackCells() {
+            blackCells = Array(SIZE).fill().map(() => Array(SIZE).fill(false));
+        }
+
+        // ذخیره و بارگذاری خودکار در هر تغییر وضعیت
+        function persistAndRender() {
+            saveGameToLocalStorage();
+            renderUI();
+        }
+
+        // ---------- منطق اصلی هیتوری ----------
+        // بررسی مجاورت سیاه‌ها (برای جلوگیری از قرارگیری دو سیاه کنار هم هنگام کلیک)
+        function hasAdjacentBlack(row, col, ignoreCurrentToggle = false) {
+            const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+            for (let [dr, dc] of dirs) {
+                const nr = row + dr, nc = col + dc;
+                if (nr>=0 && nr<SIZE && nc>=0 && nc<SIZE) {
+                    if (blackCells[nr][nc] === true) return true;
+                }
+            }
+            return false;
+        }
+
+        // تلاش برای تغییر وضعیت سلول (کلیک)
+        // بازگشت true اگر تغییر اعمال شد، false در غیر اینصورت (خطا)
+        function tryToggleCell(row, col) {
+            const currentState = blackCells[row][col];
+            // اگر میخواهیم سیاه کنیم (از سفید به سیاه)
+            if (!currentState) {
+                // قانون 1: سلول‌های سیاه مجاور هم نباشند
+                if (hasAdjacentBlack(row, col)) {
+                    showTemporaryMessage("❌ نمی‌توانید دو سلول سیاه در مجاورت هم قرار دهید!", "error");
+                    return false;
+                }
+                // اعمال تغییر
+                blackCells[row][col] = true;
+            } else {
+                // سفید کردن (برداشتن سیاه) همیشه مجاز است
+                blackCells[row][col] = false;
+            }
+            // پس از تغییر، ذخیره و رندر
+            persistAndRender();
+            // بعد از رندر، بررسی پیروزی (چون ممکن است پازل حل شده باشد)
+            if (checkVictoryConditions()) {
+                handleVictory();
+            }
+            return true;
+        }
+
+        // ---------- شرایط برد (قوانین کامل هیتوری) ----------
+        function checkVictoryConditions() {
+            // 1. بررسی عدم وجود مجاورت بین سلول‌های سیاه (دوباره چک امنیتی)
+            for (let i=0; i<SIZE; i++) {
+                for (let j=0; j<SIZE; j++) {
+                    if (blackCells[i][j]) {
+                        if (hasAdjacentBlack(i, j)) return false;
+                    }
+                }
+            }
+
+            // 2. بررسی سطرها : در هر سطر اعداد سلول‌های سفید باید یکتا باشند
+            for (let r=0; r<SIZE; r++) {
+                const whiteNumbers = [];
+                for (let c=0; c<SIZE; c++) {
+                    if (!blackCells[r][c]) {
+                        whiteNumbers.push(PUZZLES[currentPuzzleIndex].grid[r][c]);
+                    }
+                }
+                if (hasDuplicates(whiteNumbers)) return false;
+            }
+
+            // 3. بررسی ستون‌ها
+            for (let c=0; c<SIZE; c++) {
+                const whiteNumbers = [];
+                for (let r=0; r<SIZE; r++) {
+                    if (!blackCells[r][c]) {
+                        whiteNumbers.push(PUZZLES[currentPuzzleIndex].grid[r][c]);
+                    }
+                }
+                if (hasDuplicates(whiteNumbers)) return false;
+            }
+
+            // 4. اتصال همه سلول‌های سفید (یکپارچگی)
+            if (!areWhiteCellsConnected()) return false;
+
+            // همچنین حداقل یک سلول سفید باید وجود داشته باشد (اتصال خودش اینو چک می‌کنه)
+            return true;
+        }
+
+        function hasDuplicates(arr) {
+            const seen = new Set();
+            for (let val of arr) {
+                if (seen.has(val)) return true;
+                seen.add(val);
+            }
+            return false;
+        }
+
+        // BFS برای بررسی اتصال سفیدها
+        function areWhiteCellsConnected() {
+            // پیدا کردن اولین سلول سفید
+            let startRow = -1, startCol = -1;
+            outer: for (let i=0; i<SIZE; i++) {
+                for (let j=0; j<SIZE; j++) {
+                    if (!blackCells[i][j]) {
+                        startRow = i; startCol = j;
+                        break outer;
+                    }
+                }
+            }
+            if (startRow === -1) return false; // همه سیاه باشند که نامعتبره
+
+            const visited = Array(SIZE).fill().map(()=>Array(SIZE).fill(false));
+            const queue = [[startRow, startCol]];
+            visited[startRow][startCol] = true;
+            const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+
+            while (queue.length) {
+                const [r,c] = queue.shift();
+                for (let [dr, dc] of dirs) {
+                    const nr = r+dr, nc = c+dc;
+                    if (nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && !blackCells[nr][nc] && !visited[nr][nc]) {
+                        visited[nr][nc] = true;
+                        queue.push([nr,nc]);
+                    }
+                }
+            }
+            // بررسی همه سلول‌های سفید بازدید شده‌اند؟
+            for (let i=0; i<SIZE; i++) {
+                for (let j=0; j<SIZE; j++) {
+                    if (!blackCells[i][j] && !visited[i][j]) return false;
+                }
+            }
+            return true;
+        }
+
+        // ----- مدیریت پیروزی و امتیاز -----
+        function handleVictory() {
+            // اگر همین پازل قبلاً حل نشده بود، امتیاز بده
+            if (!puzzlesSolvedStatus[currentPuzzleIndex]) {
+                puzzlesSolvedStatus[currentPuzzleIndex] = true;
+                totalScore = puzzlesSolvedStatus.filter(v=>v===true).length;
+                saveGameToLocalStorage();
+                showTemporaryMessage(`🎉 تبریک! پازل "${PUZZLES[currentPuzzleIndex].name}" را حل کردید! +۱ امتیاز 🎉`, "victory");
+                renderUI(); // برای به روز رسانی امتیاز در پنل
+            } else {
+                showTemporaryMessage(`✨ آفرین! اما این پازل قبلاً حل شده بود. ادامه دهید! ✨`, "info");
+            }
+        }
+
+        // نمایش پیام موقت یا خطا
+        let msgTimeout = null;
+        function showTemporaryMessage(msg, type="info") {
+            if (!messageDiv) return;
+            messageDiv.innerHTML = msg;
+            messageDiv.style.background = type === "error" ? "#ffe0db" : (type === "victory" ? "#d9f0e1" : "#e9f0f5");
+            messageDiv.style.borderRightColor = type === "error" ? "#c7362b" : (type === "victory" ? "#2d6a4f" : "#2c3e66");
+            if (msgTimeout) clearTimeout(msgTimeout);
+            msgTimeout = setTimeout(() => {
+                if (messageDiv) messageDiv.innerHTML = "✔️ روی سلول‌ها کلیک کنید تا سیاه شوند (حذف). قوانین در پایین صفحه توضیح داده شده.";
+                if(messageDiv) messageDiv.style.background = "#e9f0f5";
+                if(messageDiv) messageDiv.style.borderRightColor = "#2c3e66";
+            }, 2800);
+        }
+
+        // ---------- رندر کامل UI ----------
+        function renderUI() {
+            if (!gridContainer) return;
+            const puzzle = PUZZLES[currentPuzzleIndex];
+            // رندر گرید
+            gridContainer.innerHTML = "";
+            for (let r=0; r<SIZE; r++) {
+                for (let c=0; c<SIZE; c++) {
+                    const cellValue = puzzle.grid[r][c];
+                    const isBlack = blackCells[r][c];
+                    const cellDiv = document.createElement("div");
+                    cellDiv.className = `cell ${isBlack ? "black" : ""}`;
+                    cellDiv.textContent = cellValue;
+                    // ذخیره مختصات با استفاده از dataset
+                    cellDiv.dataset.row = r;
+                    cellDiv.dataset.col = c;
+                    cellDiv.addEventListener("click", (function(row, col) {
+                        return function() { tryToggleCell(row, col); };
+                    })(r, c));
+                    // جلوگیری از منوی راست ماوس
+                    cellDiv.addEventListener("contextmenu", (e) => e.preventDefault());
+                    gridContainer.appendChild(cellDiv);
+                }
+            }
+            // به‌روزرسانی متن امتیاز و نام پازل
+            if (scoreSpan) scoreSpan.innerText = totalScore;
+            if (puzzleNameSpan) puzzleNameSpan.innerText = `${puzzle.name} (${currentPuzzleIndex+1}/${PUZZLES.length})`;
+        }
+
+        // ----- عملیات دکمه‌ها -----
+        function resetCurrentPuzzle() {
+            // بازنشانی سیاه‌ها به همه سفید
+            resetBlackCells();
+            persistAndRender();
+            showTemporaryMessage("بازی ریست شد. دوباره تلاش کنید!", "info");
+            // بررسی خودکار پیروزی پس از ریست نمیکنیم
+        }
+
+        function checkPuzzle() {
+            if (checkVictoryConditions()) {
+                handleVictory();
+            } else {
+                showTemporaryMessage("⛔ پازل هنوز حل نشده! قوانین هیتوری را رعایت کنید: بدون تکرار در سطر/ستون، سیاه‌ها مجاور نباشند و سفیدها متصل باشند.", "error");
+            }
+        }
+
+        function nextPuzzle() {
+            let nextIndex = (currentPuzzleIndex + 1) % PUZZLES.length;
+            currentPuzzleIndex = nextIndex;
+            // بازنشانی سلول‌های سیاه برای پازل جدید
+            resetBlackCells();
+            // ذخیره وضعیت (امتیازها و statusهای قبلی دست نمی‌خورد)
+            saveGameToLocalStorage();
+            renderUI();
+            showTemporaryMessage(`پازل جدید: ${PUZZLES[currentPuzzleIndex].name}`, "info");
+        }
+
+        function newGameFullReset() {
+            // ریست کامل پیشرفت: امتیاز کل، وضعیت حل شده‌ها، پازل اول، سیاه‌ها
+            totalScore = 0;
+            puzzlesSolvedStatus = Array(PUZZLES.length).fill(false);
+            currentPuzzleIndex = 0;
+            resetBlackCells();
+            saveGameToLocalStorage();
+            renderUI();
+            showTemporaryMessage("🎌 بازی از نو شروع شد! تمام امتیازها ریست گردید. موفق باشید.", "victory");
+        }
+
+        // ---------- ساختار اصلی mount شدن بازی در هر container با id دلخواه ----------
+        function mountGame(containerId) {
+            const root = document.getElementById(containerId);
+            if (!root) {
+                console.error(`محتوایی با id=${containerId} یافت نشد.`);
+                return;
+            }
+            containerEl = root;
+            // ساختن ساختار HTML داخل container
+            containerEl.innerHTML = `
+                <div class="game-header">
+                    <div class="title-area">
+                        <h1>♢ هیتوری (Hitori) ♢</h1>
+                        <p>معمای حذف سلول‌ها | ژاپن</p>
+                    </div>
+                    <div class="score-panel">
+                        🏆 امتیاز <span id="hitoriScore">0</span>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap:wrap;">
+                    <strong id="puzzleNameDisplay" style="background:#e3dac9; padding:0.2rem 1rem; border-radius:50px;">پازل</strong>
+                </div>
+                <div class="hitori-grid" id="hitoriGridContainer"></div>
+                <div class="toolbar">
+                    <button class="reset-btn" id="resetBtn">⟳ ریست پازل</button>
+                    <button class="check-btn" id="checkBtn">✓ بررسی حل</button>
+                    <button class="next-btn" id="nextBtn">⏩ پازل بعدی</button>
+                    <button class="newgame-btn" id="newGameBtn">🔄 شروع مجدد کامل</button>
+                </div>
+                <div class="message-area" id="messageBoard">
+                    ✔️ روی سلول‌ها کلیک کنید تا سیاه شوند (حذف). قوانین در پایین صفحه توضیح داده شده.
+                </div>
+                <div class="rules">
+                    📜 <strong>قوانین هیتوری:</strong><br>
+                    ۱- با کلیک روی هر سلول، آن را سیاه (حذف) می‌کنید. سلول‌های سیاه مجاز به مجاورت (عمودی/افقی) نیستند.<br>
+                    ۲- در هر سطر و ستون، اعداد باقی‌مانده (سفید) باید یکتا باشند (هیچ تکراری نباشد).<br>
+                    ۳- همه سلول‌های سفید باید به هم متصل باشند (یک جزیره پیوسته).<br>
+                    ۴- هدف: حذف تعدادی سلول تا قوانین بالا برقرار شود. موفق باشید!
+                </div>
+                <footer>✨ ذخیره خودکار در مرورگر | استانداردهای 2026 ✨</footer>
+            `;
+            // دریافت ارجاع به عناصر داینامیک
+            gridContainer = document.getElementById("hitoriGridContainer");
+            messageDiv = document.getElementById("messageBoard");
+            scoreSpan = document.getElementById("hitoriScore");
+            puzzleNameSpan = document.getElementById("puzzleNameDisplay");
+            // اتصال دکمه‌ها
+            document.getElementById("resetBtn").addEventListener("click", resetCurrentPuzzle);
+            document.getElementById("checkBtn").addEventListener("click", checkPuzzle);
+            document.getElementById("nextBtn").addEventListener("click", nextPuzzle);
+            document.getElementById("newGameBtn").addEventListener("click", newGameFullReset);
+
+            // بارگذاری اطلاعات از localStorage
+            const loaded = loadGameFromLocalStorage();
+            if (!loaded) {
+                // مقادیر پیش‌فرض (از قبل صفر و حل نشده)
+                resetBlackCells();
+                totalScore = 0;
+                puzzlesSolvedStatus = [false, false, false];
+                currentPuzzleIndex = 0;
+                saveGameToLocalStorage();
+            }
+            // رندر اولیه
+            renderUI();
+            // پس از رندر، پیام خوش‌آمد
+            setTimeout(() => {
+                showTemporaryMessage("به بازی هیتوری خوش آمدید! پازل را با کلیک حل کنید.", "info");
+            }, 200);
+        }
+
+        // آغاز به کار با شناسه "hitoriRoot" (قابل تغییر)
+        // این بازی را می‌توان با هر شناسه دلخواه در هر جای صفحه فراخوانی کرد.
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", () => mountGame("hitoriRoot"));
+        } else {
+            mountGame("hitoriRoot");
+        }
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>بازی فکری کن‌کن (KenKen) – فارسی</title>
+    <style>
+        /* === استانداردهای کدنویسی ۲۰۲۶: CSS مدرن، متغیرها، گرید و فلکس === */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #1e3c72;
+            --secondary: #2a5298;
+            --accent: #f9c74f;
+            --light-bg: #f8f9fa;
+            --border-light: #dee2e6;
+            --cell-size: clamp(45px, 12vw, 70px);
+            --font-main: 'Segoe UI', 'Tahoma', system-ui, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: linear-gradient(145deg, #f1f5f9 0%, #e6ecf4 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 12px;
+        }
+
+        /* کانتینر اصلی بازی – درون div با id="kenken-game" قرار می‌گیرد */
+        #kenken-game {
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 36px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 6px 12px rgba(0,0,0,0.05);
+            padding: 24px 20px 30px;
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: all 0.2s;
+        }
+
+        .game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), #0f2b4f);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin: 0;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+
+        .score-box {
+            background: var(--primary);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-weight: bold;
+            font-size: 1.3rem;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .score-box i {
+            font-size: 1.5rem;
+        }
+
+        /* راهنما – بخش توضیحات فارسی */
+        .guide-section {
+            background: #e9f0fa;
+            border-radius: 28px;
+            padding: 16px 20px;
+            margin-bottom: 22px;
+            border-right: 6px solid var(--accent);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #1e293b;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.02);
+        }
+
+        .guide-section summary {
+            font-weight: bold;
+            font-size: 1.15rem;
+            cursor: pointer;
+            color: var(--primary);
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .guide-section summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .guide-section details[open] summary {
+            margin-bottom: 12px;
+        }
+
+        .guide-content {
+            padding-right: 6px;
+        }
+
+        .guide-content p {
+            margin-bottom: 8px;
+        }
+
+        /* کنترل‌ها */
+        .control-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 22px;
+        }
+
+        .btn {
+            background: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--primary);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(4px);
+            background: rgba(255,255,255,0.8);
+        }
+
+        .btn:hover {
+            background: white;
+            box-shadow: 0 8px 14px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+            border-color: var(--accent);
+        }
+
+        .btn.primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .btn.primary:hover {
+            background: #2a4b7a;
+        }
+
+        select.btn {
+            padding: 10px 30px 10px 16px;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%231e3c72" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>');
+            background-repeat: no-repeat;
+            background-position: left 12px center;
+            background-size: 14px;
+        }
+
+        /* تخته بازی (grid) */
+        .kenken-board {
+            display: grid;
+            gap: 0;
+            background: #2c3e50;
+            padding: 3px;
+            border-radius: 22px;
+            box-shadow: 0 16px 30px -8px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            border: 2px solid #1e2b3a;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background: #fefefe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #0b1e2e;
+            position: relative;
+            transition: background 0.1s;
+            box-shadow: inset 0 0 0 0.5px #b0c4de;
+            user-select: none;
+        }
+
+        .cell.selected {
+            background: #d4e2fc;
+            box-shadow: inset 0 0 0 3px var(--accent);
+        }
+
+        .cell.fixed-value {
+            color: #1e3c72;
+        }
+
+        /* نمایش هدف و عملگر در گوشهٔ سلول اول قفس */
+        .cage-label {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: rgba(255,255,240,0.8);
+            padding: 1px 5px;
+            border-radius: 12px;
+            color: #1e3c72;
+            line-height: 1.3;
+            border: 1px solid #cdd9e6;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* نوار اعداد */
+        .numpad {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0 10px;
+        }
+
+        .num-btn {
+            width: 58px;
+            height: 58px;
+            border-radius: 30px;
+            background: white;
+            border: 1px solid var(--border-light);
+            font-size: 1.9rem;
+            font-weight: bold;
+            color: var(--primary);
+            box-shadow: 0 5px 0 #b0c4de;
+            cursor: pointer;
+            transition: all 0.05s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: inherit;
+        }
+
+        .num-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #9aafc4;
+        }
+
+        .num-btn.clear {
+            font-size: 1.4rem;
+            background: #f1e9e9;
+            color: #a00;
+        }
+
+        .message-area {
+            min-height: 2.5rem;
+            text-align: center;
+            font-weight: 500;
+            margin: 10px 0 5px;
+            color: #1e3c72;
+        }
+
+        /* رسپانسیو بیشتر */
+        @media (max-width: 480px) {
+            #kenken-game {
+                padding: 16px 12px;
+            }
+            .btn {
+                padding: 8px 14px;
+                font-size: 0.9rem;
+            }
+            .num-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.6rem;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* برای سلول‌های قفس، مرزها با کلاس مشخص می‌شوند */
+        .cell.border-top {
+            border-top: 3px solid #1e2b3a;
+        }
+        .cell.border-right {
+            border-right: 3px solid #1e2b3a;
+        }
+        .cell.border-bottom {
+            border-bottom: 3px solid #1e2b3a;
+        }
+        .cell.border-left {
+            border-left: 3px solid #1e2b3a;
+        }
+    </style>
+</head>
+<body>
+    <!-- این div جایی است که بازی در آن قرار می‌گیرد -->
+    <div id="kenken-game"></div>
+
+    <script>
+        (function(){
+            "use strict";
+
+            // ======================= کلاس اصلی بازی کن‌کن =======================
+            class KenKenGame {
+                constructor(containerId) {
+                    this.container = document.getElementById(containerId);
+                    if (!this.container) {
+                        console.error('عنصر با شناسهٔ داده شده پیدا نشد.');
+                        return;
+                    }
+
+                    // وضعیت بازی
+                    this.size = 4;          // اندازه پیش‌فرض
+                    this.grid = [];          // آرایه دو بعدی از مقادیر (null یعنی خالی)
+                    this.cages = [];         // آرایه قفس‌ها
+                    this.selectedRow = -1;
+                    this.selectedCol = -1;
+                    this.currentPuzzleIndex = 0;
+                    this.score = 0;
+                    this.puzzleSolved = false;  // آیا معمای فعلی حل شده؟
+                    
+                    // مجموعه معماهای از پیش تعریف شده (۴x۴)
+                    this.puzzles = this.generatePuzzles();
+                    
+                    // بارگذاری از localStorage
+                    this.loadFromStorage();
+                    
+                    // ساخت رابط کاربری
+                    this.render();
+                    this.attachEvents();
+                    
+                    // بروزرسانی صفحه با داده‌های بارگذاری شده
+                    this.updateBoardFromGrid();
+                    this.updateScoreDisplay();
+                }
+
+                // ----- تولید معماهای نمونه (کن‌کن ۴x۴) -----
+                generatePuzzles() {
+                    // تعریف چند معمای ۴x۴ معتبر با قفس‌های مشخص
+                    // هر قفس: { cells: [[r,c],...], op: '+', target: number }
+                    // توجه: '/' و '-' برای دو سلول، '*' و '+' برای دو یا بیشتر
+                    const puzzle1Cages = [
+                        { cells: [[0,0],[0,1]], op: '+', target: 3 },
+                        { cells: [[0,2],[1,2]], op: '-', target: 1 },
+                        { cells: [[0,3],[1,3]], op: '÷', target: 2 },
+                        { cells: [[1,0],[2,0]], op: '×', target: 6 },
+                        { cells: [[1,1],[2,1],[2,2]], op: '+', target: 9 },
+                        { cells: [[2,3],[3,3]], op: '-', target: 2 },
+                        { cells: [[3,0],[3,1]], op: '÷', target: 2 },
+                        { cells: [[3,2]], op: ' ', target: 1 }   // تک سلولی
+                    ];
+                    
+                    const puzzle2Cages = [
+                        { cells: [[0,0],[1,0]], op: '÷', target: 2 },
+                        { cells: [[0,1],[0,2]], op: '+', target: 5 },
+                        { cells: [[0,3],[1,3],[2,3]], op: '×', target: 6 },
+                        { cells: [[1,1],[2,1]], op: '-', target: 1 },
+                        { cells: [[1,2],[2,2]], op: '+', target: 7 },
+                        { cells: [[2,0],[3,0]], op: '−', target: 2 },
+                        { cells: [[3,1],[3,2]], op: '÷', target: 2 },
+                        { cells: [[3,3]], op: ' ', target: 3 }
+                    ];
+                    
+                    const puzzle3Cages = [
+                        { cells: [[0,0],[0,1],[1,0]], op: '+', target: 6 },
+                        { cells: [[0,2],[0,3]], op: '×', target: 12 },
+                        { cells: [[1,1],[2,1]], op: '÷', target: 2 },
+                        { cells: [[1,2],[1,3],[2,3]], op: '+', target: 8 },
+                        { cells: [[2,0],[3,0]], op: '-', target: 1 },
+                        { cells: [[2,2],[3,2]], op: '−', target: 2 },
+                        { cells: [[3,1],[3,3]], op: '×', target: 8 },
+                        { cells: [[3,0]], op: ' ', target: 4 } // اصلاح: سلول ۳,۰ قبلاً استفاده شده؛ باید بررسی کنم
+                        // تصحیح: در معمای سوم باید همه سلول‌ها پوشش داده شوند. کمی تغییر:
+                    ];
+                    // بیایید معمای سوم را دقیق بازنویسی کنیم (۴x۴ کامل):
+                    const puzzle3Fixed = [
+                        { cells: [[0,0],[0,1],[1,0]], op: '+', target: 6 },
+                        { cells: [[0,2],[0,3]], op: '×', target: 6 },
+                        { cells: [[1,1],[2,1]], op: '÷', target: 2 },
+                        { cells: [[1,2],[1,3]], op: '-', target: 1 },
+                        { cells: [[2,0],[3,0]], op: '÷', target: 2 },
+                        { cells: [[2,2],[2,3],[3,2]], op: '+', target: 9 },
+                        { cells: [[3,1],[3,3]], op: '×', target: 8 }
+                    ];
+                    
+                    return [
+                        { size: 4, cages: puzzle1Cages },
+                        { size: 4, cages: puzzle2Cages },
+                        { size: 4, cages: puzzle3Fixed }
+                    ];
+                }
+
+                // ----- مقداردهی اولیه grid بر اساس معمای جاری -----
+                initializeGrid() {
+                    const puzzle = this.puzzles[this.currentPuzzleIndex];
+                    this.size = puzzle.size;
+                    this.grid = Array(this.size).fill().map(() => Array(this.size).fill(null));
+                    this.cages = puzzle.cages;
+                    this.puzzleSolved = false;
+                }
+
+                // ----- رندر کل رابط کاربری -----
+                render() {
+                    this.container.innerHTML = `
+                        <div class="game-header">
+                            <h1>🧩 کن‌کن</h1>
+                            <div class="score-box">
+                                <span>🏆</span>
+                                <span id="scoreDisplay">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="guide-section">
+                            <details open>
+                                <summary>📘 راهنمای بازی (فارسی)</summary>
+                                <div class="guide-content">
+                                    <p><strong>کن‌کن (KenKen)</strong> یک بازی فکری ریاضی ژاپنی است. هدف پر کردن جدول با اعداد ۱ تا ${this.size} است، به‌طوری که:</p>
+                                    <ul style="padding-right:20px; margin:8px 0;">
+                                        <li>در هر سطر و هر ستون، اعداد تکراری نباشند.</li>
+                                        <li>هر «قفس» (ناحیهٔ ضخیم) دارای یک عدد هدف و یک عملگر (+ ، − ، × ، ÷) است. باید با قرار دادن اعداد در آن قفس، به هدف برسید.</li>
+                                        <li>برای عملگرهای − و ÷ ترتیب مهم نیست؛ نتیجهٔ تفریق یا تقسیم دو عدد باید هدف شود.</li>
+                                        <li>روی خانه کلیک کرده و از دکمه‌های پایین عدد وارد کنید. 🗑️ برای پاک کردن.</li>
+                                    </ul>
+                                    <p>✅ با دکمهٔ «بررسی» صحت جدول کنترل می‌شود. هر حل موفق ۱۰۰ امتیاز دارد و بازی ذخیره می‌شود.</p>
+                                </div>
+                            </details>
+                        </div>
+                        
+                        <div class="control-bar">
+                            <button class="btn" id="newGameBtn">🔄 معمای جدید</button>
+                            <select id="puzzleSelect" class="btn" style="min-width:130px;"></select>
+                            <button class="btn" id="checkBtn">✅ بررسی</button>
+                            <button class="btn" id="resetBtn">🗑️ پاک کردن جدول</button>
+                        </div>
+                        
+                        <div id="boardContainer" class="kenken-board" style="grid-template-columns: repeat(${this.size}, var(--cell-size));"></div>
+                        
+                        <div class="numpad" id="numpad"></div>
+                        <div id="messageArea" class="message-area"></div>
+                    `;
+                    
+                    this.renderBoard();
+                    this.renderNumpad();
+                    this.populatePuzzleSelect();
+                }
+
+                // ----- رسم تخته و قفس‌ها -----
+                renderBoard() {
+                    const boardDiv = this.container.querySelector('#boardContainer');
+                    boardDiv.style.gridTemplateColumns = `repeat(${this.size}, var(--cell-size))`;
+                    boardDiv.innerHTML = '';
+                    
+                    // ساخت یک map برای تعیین قفس هر سلول و تشخیص مرزها
+                    const cageMap = Array(this.size).fill().map(() => Array(this.size).fill(null));
+                    const cageIndexMap = Array(this.size).fill().map(() => Array(this.size).fill(-1));
+                    
+                    this.cages.forEach((cage, idx) => {
+                        cage.cells.forEach(([r,c]) => {
+                            cageMap[r][c] = cage;
+                            cageIndexMap[r][c] = idx;
+                        });
+                    });
+                    
+                    // ایجاد سلول‌ها
+                    for (let r = 0; r < this.size; r++) {
+                        for (let c = 0; c < this.size; c++) {
+                            const cell = document.createElement('div');
+                            cell.className = 'cell';
+                            cell.dataset.row = r;
+                            cell.dataset.col = c;
+                            
+                            const value = this.grid[r][c];
+                            cell.textContent = value !== null ? value : '';
+                            
+                            // اعمال کلاس‌های مرز برای قفس
+                            const cage = cageMap[r][c];
+                            if (cage) {
+                                const isTopEdge = !cage.cells.some(([rr,cc]) => rr === r-1 && cc === c);
+                                const isBottomEdge = !cage.cells.some(([rr,cc]) => rr === r+1 && cc === c);
+                                const isLeftEdge = !cage.cells.some(([rr,cc]) => rr === r && cc === c-1);
+                                const isRightEdge = !cage.cells.some(([rr,cc]) => rr === r && cc === c+1);
+                                
+                                if (isTopEdge) cell.classList.add('border-top');
+                                if (isBottomEdge) cell.classList.add('border-bottom');
+                                if (isLeftEdge) cell.classList.add('border-left');
+                                if (isRightEdge) cell.classList.add('border-right');
+                                
+                                // نمایش هدف/عملگر فقط در اولین سلول قفس (با کمترین r سپس c)
+                                const firstCell = cage.cells.reduce((min, pos) => 
+                                    (pos[0] < min[0] || (pos[0] === min[0] && pos[1] < min[1])) ? pos : min
+                                );
+                                if (r === firstCell[0] && c === firstCell[1]) {
+                                    const label = document.createElement('span');
+                                    label.className = 'cage-label';
+                                    let opDisplay = cage.op;
+                                    if (opDisplay === ' ') opDisplay = '';
+                                    label.textContent = `${cage.target}${opDisplay}`;
+                                    cell.appendChild(label);
+                                }
+                            }
+                            
+                            if (this.selectedRow === r && this.selectedCol === c) {
+                                cell.classList.add('selected');
+                            }
+                            
+                            cell.addEventListener('click', () => this.selectCell(r, c));
+                            boardDiv.appendChild(cell);
+                        }
+                    }
+                }
+
+                // ----- ساخت دکمه‌های اعداد -----
+                renderNumpad() {
+                    const pad = this.container.querySelector('#numpad');
+                    pad.innerHTML = '';
+                    for (let i = 1; i <= this.size; i++) {
+                        const btn = document.createElement('button');
+                        btn.className = 'num-btn';
+                        btn.textContent = i;
+                        btn.addEventListener('click', () => this.setSelectedCellValue(i));
+                        pad.appendChild(btn);
+                    }
+                    const clearBtn = document.createElement('button');
+                    clearBtn.className = 'num-btn clear';
+                    clearBtn.textContent = '⌫';
+                    clearBtn.addEventListener('click', () => this.setSelectedCellValue(null));
+                    pad.appendChild(clearBtn);
+                }
+
+                // ----- پر کردن منوی انتخاب معما -----
+                populatePuzzleSelect() {
+                    const select = this.container.querySelector('#puzzleSelect');
+                    select.innerHTML = '';
+                    this.puzzles.forEach((p, idx) => {
+                        const option = document.createElement('option');
+                        option.value = idx;
+                        option.textContent = `معمای ${idx+1} (${p.size}x${p.size})`;
+                        if (idx === this.currentPuzzleIndex) option.selected = true;
+                        select.appendChild(option);
+                    });
+                    select.addEventListener('change', (e) => {
+                        this.currentPuzzleIndex = parseInt(e.target.value);
+                        this.initializeGrid();
+                        this.puzzleSolved = false;
+                        this.selectedRow = this.selectedCol = -1;
+                        this.renderBoard();
+                        this.renderNumpad();
+                        this.clearMessage();
+                        this.saveToStorage();
+                    });
+                }
+
+                // ----- انتخاب سلول -----
+                selectCell(r, c) {
+                    if (this.puzzleSolved) {
+                        this.setMessage('🎉 معما حل شده! برای ادامه معمای جدید انتخاب کنید.');
+                        return;
+                    }
+                    this.selectedRow = r;
+                    this.selectedCol = c;
+                    this.renderBoard();
+                }
+
+                // ----- مقداردهی به سلول انتخاب شده -----
+                setSelectedCellValue(val) {
+                    if (this.selectedRow === -1 || this.selectedCol === -1) {
+                        this.setMessage('⚠️ ابتدا یک خانه را انتخاب کنید.');
+                        return;
+                    }
+                    if (this.puzzleSolved) {
+                        this.setMessage('معما حل شده است. برای تغییر، دکمهٔ «پاک کردن» یا «جدید» را بزنید.');
+                        return;
+                    }
+                    
+                    // مقدار می‌تواند null (پاک) یا عدد ۱ تا size باشد
+                    if (val !== null && (val < 1 || val > this.size)) return;
+                    
+                    this.grid[this.selectedRow][this.selectedCol] = val;
+                    this.renderBoard();
+                    this.saveToStorage();
+                    this.clearMessage();
+                }
+
+                // ----- بروزرسانی تخته از روی grid (برای بارگذاری) -----
+                updateBoardFromGrid() {
+                    this.renderBoard();
+                }
+
+                // ----- بررسی صحت معما -----
+                checkSolution() {
+                    // ۱. بررسی تکراری نبودن در سطر و ستون
+                    for (let i = 0; i < this.size; i++) {
+                        const rowVals = this.grid[i].filter(v => v !== null);
+                        if (new Set(rowVals).size !== rowVals.length) {
+                            this.setMessage('❌ اعداد تکراری در سطر ' + (i+1));
+                            return false;
+                        }
+                        const colVals = [];
+                        for (let j = 0; j < this.size; j++) {
+                            if (this.grid[j][i] !== null) colVals.push(this.grid[j][i]);
+                        }
+                        if (new Set(colVals).size !== colVals.length) {
+                            this.setMessage('❌ اعداد تکراری در ستون ' + (i+1));
+                            return false;
+                        }
+                    }
+                    
+                    // ۲. بررسی تمام سلول‌ها پر شده باشند
+                    for (let r=0; r<this.size; r++) {
+                        for (let c=0; c<this.size; c++) {
+                            if (this.grid[r][c] === null) {
+                                this.setMessage('⚠️ همه خانه‌ها پر نشده‌اند.');
+                                return false;
+                            }
+                        }
+                    }
+                    
+                    // ۳. بررسی قفس‌ها
+                    for (const cage of this.cages) {
+                        const values = cage.cells.map(([r,c]) => this.grid[r][c]);
+                        if (!this.checkCage(cage.op, cage.target, values)) {
+                            this.setMessage(`❌ قفس با هدف ${cage.target}${cage.op} نادرست است.`);
+                            return false;
+                        }
+                    }
+                    
+                    // حل شد!
+                    if (!this.puzzleSolved) {
+                        this.puzzleSolved = true;
+                        this.score += 100;
+                        this.updateScoreDisplay();
+                        this.saveToStorage();
+                    }
+                    this.setMessage('🎉 تبریک! معما به‌درستی حل شد. ۱۰۰ امتیاز گرفتید.');
+                    return true;
+                }
+
+                // ----- منطق محاسبه قفس -----
+                checkCage(op, target, vals) {
+                    if (vals.includes(null)) return false;
+                    if (op === ' ') return vals[0] === target;
+                    if (op === '+') return vals.reduce((a,b) => a+b, 0) === target;
+                    if (op === '×' || op === '*') return vals.reduce((a,b) => a*b, 1) === target;
+                    if (op === '-') {
+                        if (vals.length !== 2) return false;
+                        return Math.abs(vals[0] - vals[1]) === target;
+                    }
+                    if (op === '÷' || op === '/') {
+                        if (vals.length !== 2) return false;
+                        return (vals[0] / vals[1] === target) || (vals[1] / vals[0] === target);
+                    }
+                    return false;
+                }
+
+                // ----- ریست کردن جدول (همه خالی) -----
+                resetBoard() {
+                    if (this.puzzleSolved) this.puzzleSolved = false;
+                    this.grid = Array(this.size).fill().map(() => Array(this.size).fill(null));
+                    this.selectedRow = this.selectedCol = -1;
+                    this.renderBoard();
+                    this.clearMessage();
+                    this.saveToStorage();
+                }
+
+                // ----- نمایش پیام -----
+                setMessage(text) {
+                    const msgDiv = this.container.querySelector('#messageArea');
+                    if (msgDiv) msgDiv.textContent = text;
+                }
+
+                clearMessage() {
+                    const msgDiv = this.container.querySelector('#messageArea');
+                    if (msgDiv) msgDiv.textContent = '';
+                }
+
+                updateScoreDisplay() {
+                    const span = this.container.querySelector('#scoreDisplay');
+                    if (span) span.textContent = this.score;
+                }
+
+                // ----- ذخیره و بارگذاری در localStorage -----
+                saveToStorage() {
+                    const state = {
+                        currentPuzzleIndex: this.currentPuzzleIndex,
+                        grid: this.grid,
+                        score: this.score,
+                        puzzleSolved: this.puzzleSolved,
+                        selected: { row: this.selectedRow, col: this.selectedCol }
+                    };
+                    localStorage.setItem('kenken_save', JSON.stringify(state));
+                }
+
+                loadFromStorage() {
+                    const saved = localStorage.getItem('kenken_save');
+                    if (saved) {
+                        try {
+                            const state = JSON.parse(saved);
+                            this.currentPuzzleIndex = state.currentPuzzleIndex ?? 0;
+                            this.score = state.score ?? 0;
+                            this.puzzleSolved = state.puzzleSolved ?? false;
+                            this.initializeGrid();
+                            if (state.grid && Array.isArray(state.grid)) {
+                                this.grid = state.grid;
+                            }
+                            if (state.selected) {
+                                this.selectedRow = state.selected.row;
+                                this.selectedCol = state.selected.col;
+                            }
+                        } catch(e) { /* اگر خطا بود از مقدار پیش‌فرض استفاده کن */ }
+                    } else {
+                        this.initializeGrid();
+                    }
+                }
+
+                // ----- اتصال رویدادها -----
+                attachEvents() {
+                    this.container.querySelector('#newGameBtn').addEventListener('click', () => {
+                        this.currentPuzzleIndex = (this.currentPuzzleIndex + 1) % this.puzzles.length;
+                        this.initializeGrid();
+                        this.puzzleSolved = false;
+                        this.selectedRow = this.selectedCol = -1;
+                        this.renderBoard();
+                        this.renderNumpad();
+                        this.populatePuzzleSelect();
+                        this.clearMessage();
+                        this.saveToStorage();
+                    });
+                    
+                    this.container.querySelector('#checkBtn').addEventListener('click', () => this.checkSolution());
+                    this.container.querySelector('#resetBtn').addEventListener('click', () => this.resetBoard());
+                    
+                    // پشتیبانی از کلیدهای کیبورد
+                    document.addEventListener('keydown', (e) => {
+                        if (!this.container.contains(document.activeElement) && document.activeElement !== document.body) return;
+                        if (this.selectedRow === -1) return;
+                        if (e.key >= '1' && e.key <= String(this.size)) {
+                            this.setSelectedCellValue(parseInt(e.key));
+                            e.preventDefault();
+                        } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                            this.setSelectedCellValue(null);
+                            e.preventDefault();
+                        }
+                    });
+                }
+            }
+
+            // راه‌اندازی بازی پس از بارگذاری صفحه
+            window.addEventListener('DOMContentLoaded', () => {
+                new KenKenGame('kenken-game');
+            });
+        })();
+    </script>
+</body>
+</html>

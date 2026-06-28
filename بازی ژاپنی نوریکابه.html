@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>نوریکابه - معمای دیوار نامرئی</title>
+    <style>
+        /* === 2026 Modern CSS Reset & Variables === */
+        :root {
+            --bg: #f5f3f0;
+            --surface: #fffaf2;
+            --primary: #2e5a4c;
+            --primary-light: #4a7c6b;
+            --accent: #c44b3c;
+            --text: #2c2a28;
+            --text-soft: #5e5a55;
+            --border: #d9d0c5;
+            --cell-bg: #fefcf8;
+            --cell-black: #1e2b26;
+            --cell-white: #f0ede5;
+            --cell-number: #e8dccc;
+            --shadow: 0 8px 20px rgba(0,0,0,0.05), 0 2px 6px rgba(0,0,0,0.03);
+            --radius-card: 28px;
+            --radius-cell: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Vazirmatn', 'Segoe UI', system-ui, sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            margin: 0;
+        }
+
+        /* === Container اصلی بازی (قابل جاسازی) === */
+        #nurikabe-game {
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .game-card {
+            background: var(--surface);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow);
+            padding: 24px 20px 28px;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,240,0.5);
+            transition: all 0.2s ease;
+        }
+
+        /* === هدر و امتیاز === */
+        .game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--primary);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .score-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(46, 90, 76, 0.06);
+            padding: 8px 18px;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: var(--text-soft);
+        }
+
+        .score-value {
+            font-weight: 700;
+            font-size: 1.6rem;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        /* === راهنما (پنل فارسی) === */
+        .guide-toggle {
+            background: none;
+            border: 1.5px solid var(--border);
+            color: var(--text);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .guide-toggle:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .guide-panel {
+            background: #f9f6f0;
+            border-radius: 22px;
+            padding: 20px 22px;
+            margin: 16px 0 20px;
+            border-right: 6px solid var(--primary-light);
+            font-size: 0.98rem;
+            color: var(--text);
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.02);
+        }
+
+        .guide-panel h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-weight: 650;
+        }
+
+        .guide-panel ul {
+            padding-right: 22px;
+        }
+
+        .guide-panel li {
+            margin-bottom: 8px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* === تخته بازی (Grid) === */
+        .board-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0 8px;
+        }
+
+        .nurikabe-grid {
+            display: inline-grid;
+            gap: 6px;
+            background: var(--border);
+            padding: 6px;
+            border-radius: 24px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02), 0 4px 8px rgba(0,0,0,0.02);
+            direction: ltr; /* حفظ جهت چیدمان سلول‌ها */
+        }
+
+        .cell {
+            width: min(12vw, 70px);
+            height: min(12vw, 70px);
+            max-width: 80px;
+            max-height: 80px;
+            min-width: 44px;
+            min-height: 44px;
+            background: var(--cell-bg);
+            border-radius: var(--radius-cell);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.02);
+            transition: all 0.15s;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid rgba(255,255,255,0.7);
+            backdrop-filter: blur(2px);
+        }
+
+        .cell.black {
+            background: var(--cell-black);
+            color: transparent;
+            box-shadow: inset 0 0 0 1px #3a4d45;
+        }
+
+        .cell.white {
+            background: var(--cell-white);
+            box-shadow: inset 0 0 0 1px #cfc9be;
+        }
+
+        .cell.number {
+            background: var(--cell-number);
+            font-weight: 800;
+            cursor: default;
+            color: #1e3a2f;
+            box-shadow: inset 0 0 0 2px var(--primary-light);
+        }
+
+        /* === کنترل‌ها === */
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .btn {
+            background: white;
+            border: 1.5px solid var(--border);
+            padding: 12px 22px;
+            border-radius: 48px;
+            font-size: 1rem;
+            font-weight: 550;
+            color: var(--text);
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            flex: 0 1 auto;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 6px 12px rgba(46, 90, 76, 0.18);
+        }
+
+        .btn-primary:hover {
+            background: #1f4036;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 18px rgba(0,0,0,0.05);
+            border-color: var(--primary);
+        }
+
+        .win-message {
+            text-align: center;
+            margin: 16px 0 0;
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 1.2rem;
+            min-height: 2.4rem;
+        }
+
+        /* === واکنش‌گرایی (Responsive) === */
+        @media (max-width: 480px) {
+            .game-card { padding: 18px 12px; }
+            h1 { font-size: 1.6rem; }
+            .btn { padding: 10px 16px; font-size: 0.9rem; }
+            .cell { font-size: 1.2rem; }
+        }
+
+        /* برای پشتیبانی از حالت تاریک (اختیاری) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1a1e1c;
+                --surface: #232927;
+                --text: #e2dfd7;
+                --text-soft: #b7b2a8;
+                --border: #3e4942;
+                --cell-bg: #2e3832;
+                --cell-white: #3f4a42;
+                --cell-number: #4c5d53;
+                --primary: #5d9b86;
+            }
+            .cell.black { background: #101612; }
+            .guide-panel { background: #2a322e; }
+        }
+    </style>
+    <!-- فونت وزیرمتن برای نمایش بهتر فارسی -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <!-- این div جایی است که بازی در آن رندر می‌شود -->
+    <div id="nurikabe-game"></div>
+
+    <script type="module">
+        (function(){
+            "use strict";
+
+            // ---------- 2026 Modern JavaScript (ES2025+) ----------
+            // استفاده از کلاس‌ها، private fields, localStorage, container queries mindset
+
+            // ---------- تنظیمات و داده‌های اولیه ----------
+            const STORAGE_KEY = 'nurikabe_saved_game';
+            const SCORE_KEY = 'nurikabe_score';
+
+            // پازل‌های نمونه (اندازه، موقعیت اعداد)
+            const PUZZLES = [
+                {   // پازل ۵×۵ ساده
+                    size: 5,
+                    numbers: [
+                        { r: 0, c: 0, val: 2 },
+                        { r: 1, c: 2, val: 2 },
+                        { r: 3, c: 1, val: 1 },
+                        { r: 4, c: 4, val: 3 }
+                    ]
+                },
+                {   // پازل ۷×۷ متوسط
+                    size: 7,
+                    numbers: [
+                        { r: 0, c: 3, val: 4 },
+                        { r: 1, c: 0, val: 2 },
+                        { r: 2, c: 5, val: 3 },
+                        { r: 3, c: 3, val: 5 },
+                        { r: 4, c: 1, val: 2 },
+                        { r: 5, c: 6, val: 1 },
+                        { r: 6, c: 4, val: 3 }
+                    ]
+                }
+            ];
+
+            // کلاس اصلی بازی
+            class NurikabeGame {
+                #container;
+                #size;
+                #grid;              // آرایه دو بعدی از وضعیت سلول: { type: 'number'|'empty'|'black'|'white', value? }
+                #numbers;           // نگهداری موقعیت اعداد برای اعتبارسنجی
+                #puzzleIndex = 0;
+                #score = 0;
+                #gameWon = false;
+                #guideVisible = true;
+
+                constructor(containerElement) {
+                    this.#container = containerElement;
+                    this.#loadScore();
+                    this.#puzzleIndex = 0; 
+                    this.#initFromPuzzle(PUZZLES[0]);
+                    this.#render();
+                    this.#attachEvents();
+                    this.#loadSavedGame(); // بارگذاری خودکار در صورت وجود
+                }
+
+                // ----- مقداردهی اولیه از پازل -----
+                #initFromPuzzle(puzzle) {
+                    this.#size = puzzle.size;
+                    this.#numbers = puzzle.numbers;
+                    this.#grid = Array(this.#size).fill().map(() => 
+                        Array(this.#size).fill().map(() => ({ type: 'empty' }))
+                    );
+                    // قرار دادن اعداد
+                    for (let num of this.#numbers) {
+                        this.#grid[num.r][num.c] = { type: 'number', value: num.val };
+                    }
+                    this.#gameWon = false;
+                }
+
+                // ----- رندر کامل رابط کاربری -----
+                #render() {
+                    this.#container.innerHTML = '';
+                    const card = document.createElement('div');
+                    card.className = 'game-card';
+
+                    // هدر
+                    const header = document.createElement('div');
+                    header.className = 'game-header';
+                    header.innerHTML = `
+                        <h1>🏝️ نوریکابه</h1>
+                        <div class="score-area">
+                            <span class="score-label">امتیاز</span>
+                            <span class="score-value" id="scoreDisplay">${this.#score}</span>
+                        </div>
+                    `;
+                    
+                    // دکمه راهنما
+                    const guideBtn = document.createElement('button');
+                    guideBtn.className = 'guide-toggle';
+                    guideBtn.innerHTML = `📖 راهنمای فارسی ${this.#guideVisible ? '▲' : '▼'}`;
+                    guideBtn.setAttribute('aria-label', 'نمایش یا پنهان کردن راهنما');
+                    
+                    // پنل راهنما
+                    const guidePanel = document.createElement('div');
+                    guidePanel.className = `guide-panel ${this.#guideVisible ? '' : 'hidden'}`;
+                    guidePanel.innerHTML = `
+                        <h3>📌 قوانین نوریکابه</h3>
+                        <ul>
+                            <li><strong>دیوار (سیاه)</strong> باید یکپارچه و پیوسته باشد و هیچ مربع ۲×۲ کاملاً سیاه وجود نداشته باشد.</li>
+                            <li><strong>جزیره‌های سفید</strong> هرکدام دقیقاً یک عدد دارند و تعداد خانه‌های سفید آن جزیره برابر با عدد درون آن است.</li>
+                            <li>خانه‌های شماره‌دار قابل تغییر نیستند و جزو سفیدها محسوب می‌شوند.</li>
+                            <li>با کلیک روی خانه‌های خالی: <span style="background:#f0ede5;padding:2px 8px;border-radius:20px;">سفید</span> ↔ <span style="background:#1e2b26;color:white;padding:2px 8px;border-radius:20px;">سیاه</span> ↔ خالی</li>
+                            <li>پس از تکمیل درست، پیام پیروزی نمایش داده می‌شود و امتیاز افزایش می‌یابد.</li>
+                        </ul>
+                    `;
+
+                    // تخته بازی
+                    const boardWrapper = document.createElement('div');
+                    boardWrapper.className = 'board-wrapper';
+                    const gridEl = document.createElement('div');
+                    gridEl.className = 'nurikabe-grid';
+                    gridEl.style.gridTemplateColumns = `repeat(${this.#size}, 1fr)`;
+                    
+                    // ساخت سلول‌ها
+                    for (let r = 0; r < this.#size; r++) {
+                        for (let c = 0; c < this.#size; c++) {
+                            const cell = this.#createCellElement(r, c);
+                            gridEl.appendChild(cell);
+                        }
+                    }
+                    boardWrapper.appendChild(gridEl);
+
+                    // نوار عملیات
+                    const actionBar = document.createElement('div');
+                    actionBar.className = 'action-bar';
+                    actionBar.innerHTML = `
+                        <button class="btn btn-outline" id="resetBtn">🔄 از نو</button>
+                        <button class="btn btn-outline" id="newPuzzleBtn">✨ پازل بعدی</button>
+                        <button class="btn btn-primary" id="checkWinBtn">✅ بررسی پیروزی</button>
+                        <button class="btn" id="saveBtn">💾 ذخیره</button>
+                    `;
+
+                    // پیام وضعیت
+                    const winMsg = document.createElement('div');
+                    winMsg.className = 'win-message';
+                    winMsg.id = 'winMessage';
+
+                    card.appendChild(header);
+                    card.appendChild(guideBtn);
+                    card.appendChild(guidePanel);
+                    card.appendChild(boardWrapper);
+                    card.appendChild(actionBar);
+                    card.appendChild(winMsg);
+                    this.#container.appendChild(card);
+
+                    this.#updateWinMessage();
+                }
+
+                #createCellElement(r, c) {
+                    const cellData = this.#grid[r][c];
+                    const div = document.createElement('div');
+                    div.className = 'cell';
+                    div.dataset.row = r;
+                    div.dataset.col = c;
+                    
+                    if (cellData.type === 'number') {
+                        div.classList.add('number');
+                        div.textContent = cellData.value;
+                    } else if (cellData.type === 'black') {
+                        div.classList.add('black');
+                    } else if (cellData.type === 'white') {
+                        div.classList.add('white');
+                    } else {
+                        // empty
+                        div.textContent = '';
+                    }
+                    return div;
+                }
+
+                #attachEvents() {
+                    // استفاده از event delegation
+                    this.#container.addEventListener('click', (e) => {
+                        const cell = e.target.closest('.cell');
+                        if (!cell) return;
+                        if (cell.classList.contains('number')) return; // غیرقابل تغییر
+                        
+                        const row = parseInt(cell.dataset.row);
+                        const col = parseInt(cell.dataset.col);
+                        this.#cycleCell(row, col);
+                        
+                        // دکمه‌ها
+                        if (e.target.id === 'resetBtn') this.#resetGame();
+                        if (e.target.id === 'newPuzzleBtn') this.#nextPuzzle();
+                        if (e.target.id === 'checkWinBtn') this.#checkWinAndNotify();
+                        if (e.target.id === 'saveBtn') this.#saveGame();
+                        if (e.target.classList.contains('guide-toggle')) this.#toggleGuide();
+                    });
+
+                    // پشتیبانی از لمس بهتر
+                    this.#container.addEventListener('touchstart', (e) => {
+                        // فقط برای جلوگیری از رفتار پیش‌فرض مزاحم (اختیاری)
+                    }, { passive: true });
+                }
+
+                #cycleCell(row, col) {
+                    if (this.#gameWon) return;
+                    const cell = this.#grid[row][col];
+                    if (cell.type === 'number') return;
+                    
+                    // چرخش: empty -> black -> white -> empty
+                    if (cell.type === 'empty') {
+                        cell.type = 'black';
+                    } else if (cell.type === 'black') {
+                        cell.type = 'white';
+                    } else if (cell.type === 'white') {
+                        cell.type = 'empty';
+                    }
+                    
+                    this.#updateGridUI();
+                    this.#autoSave(); // ذخیره خودکار در localStorage
+                }
+
+                #updateGridUI() {
+                    const gridEl = this.#container.querySelector('.nurikabe-grid');
+                    if (!gridEl) return;
+                    const cells = gridEl.children;
+                    let idx = 0;
+                    for (let r = 0; r < this.#size; r++) {
+                        for (let c = 0; c < this.#size; c++) {
+                            const cellDiv = cells[idx];
+                            const data = this.#grid[r][c];
+                            cellDiv.className = 'cell';
+                            if (data.type === 'number') {
+                                cellDiv.classList.add('number');
+                                cellDiv.textContent = data.value;
+                            } else {
+                                cellDiv.textContent = '';
+                                if (data.type === 'black') cellDiv.classList.add('black');
+                                else if (data.type === 'white') cellDiv.classList.add('white');
+                            }
+                            idx++;
+                        }
+                    }
+                    this.#updateWinMessage();
+                }
+
+                #updateWinMessage() {
+                    const msgEl = this.#container.querySelector('#winMessage');
+                    if (msgEl) {
+                        if (this.#gameWon) msgEl.textContent = '🎉 آفرین! پازل حل شد! 🎉';
+                        else msgEl.textContent = '';
+                    }
+                    const scoreSpan = this.#container.querySelector('#scoreDisplay');
+                    if (scoreSpan) scoreSpan.textContent = this.#score;
+                }
+
+                // ----- اعتبارسنجی کامل (نوریکابه) -----
+                #validateAll() {
+                    const size = this.#size;
+                    // 1. هیچ خانه خالی نباید باقی بماند
+                    for (let r=0; r<size; r++) for (let c=0; c<size; c++) 
+                        if (this.#grid[r][c].type === 'empty') return false;
+                    
+                    // 2. دیوار پیوسته و بدون ۲×۲ سیاه
+                    if (!this.#isWallConnected()) return false;
+                    if (this.#hasBlack2x2()) return false;
+                    
+                    // 3. جزایر سفید: هر عدد جزیره‌ای با اندازه درست
+                    const visited = Array(size).fill().map(() => Array(size).fill(false));
+                    
+                    for (let num of this.#numbers) {
+                        const { r, c, val } = num;
+                        if (this.#grid[r][c].type !== 'number') continue;
+                        const count = this.#floodFillWhite(r, c, visited);
+                        if (count !== val) return false;
+                    }
+                    
+                    // 4. اطمینان از اینکه هیچ خانه سفید بدون عدد باقی نمانده
+                    for (let r=0; r<size; r++) {
+                        for (let c=0; c<size; c++) {
+                            if ((this.#grid[r][c].type === 'white' || this.#grid[r][c].type === 'number') && !visited[r][c]) {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                }
+
+                #floodFillWhite(r, c, visited) {
+                    if (r<0||r>=this.#size||c<0||c>=this.#size) return 0;
+                    const cell = this.#grid[r][c];
+                    if (cell.type !== 'white' && cell.type !== 'number') return 0;
+                    if (visited[r][c]) return 0;
+                    visited[r][c] = true;
+                    let sum = 1;
+                    sum += this.#floodFillWhite(r+1, c, visited);
+                    sum += this.#floodFillWhite(r-1, c, visited);
+                    sum += this.#floodFillWhite(r, c+1, visited);
+                    sum += this.#floodFillWhite(r, c-1, visited);
+                    return sum;
+                }
+
+                #isWallConnected() {
+                    // دیوار = سلول‌های black
+                    const size = this.#size;
+                    let start = null;
+                    for (let r=0; r<size; r++) {
+                        for (let c=0; c<size; c++) {
+                            if (this.#grid[r][c].type === 'black') {
+                                start = [r, c];
+                                break;
+                            }
+                        }
+                        if (start) break;
+                    }
+                    if (!start) return true; // بدون دیوار (مجاز نیست اما بررسی می‌شود)
+                    
+                    const visited = Array(size).fill().map(() => Array(size).fill(false));
+                    const stack = [start];
+                    visited[start[0]][start[1]] = true;
+                    let count = 0;
+                    while (stack.length) {
+                        const [r,c] = stack.pop();
+                        count++;
+                        const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+                        for (let [dr,dc] of dirs) {
+                            const nr = r+dr, nc = c+dc;
+                            if (nr>=0&&nr<size&&nc>=0&&nc<size && !visited[nr][nc] && this.#grid[nr][nc].type==='black') {
+                                visited[nr][nc] = true;
+                                stack.push([nr,nc]);
+                            }
+                        }
+                    }
+                    // شمارش کل خانه‌های سیاه
+                    let totalBlack = 0;
+                    for (let r=0; r<size; r++) for (let c=0; c<size; c++) if(this.#grid[r][c].type==='black') totalBlack++;
+                    return count === totalBlack;
+                }
+
+                #hasBlack2x2() {
+                    for (let r=0; r<this.#size-1; r++) {
+                        for (let c=0; c<this.#size-1; c++) {
+                            if (this.#grid[r][c].type==='black' &&
+                                this.#grid[r+1][c].type==='black' &&
+                                this.#grid[r][c+1].type==='black' &&
+                                this.#grid[r+1][c+1].type==='black') return true;
+                        }
+                    }
+                    return false;
+                }
+
+                #checkWinAndNotify() {
+                    if (this.#gameWon) return;
+                    const valid = this.#validateAll();
+                    if (valid) {
+                        this.#gameWon = true;
+                        this.#score += 10;
+                        this.#saveScore();
+                        this.#updateGridUI();
+                        this.#updateWinMessage();
+                        this.#saveGame(); // ذخیره وضعیت برنده
+                    } else {
+                        alert('❌ هنوز کامل نشده یا قوانین رعایت نشده‌اند.');
+                    }
+                }
+
+                // ----- مدیریت بازی -----
+                #resetGame() {
+                    this.#initFromPuzzle(PUZZLES[this.#puzzleIndex]);
+                    this.#render();
+                    this.#attachEvents();
+                }
+
+                #nextPuzzle() {
+                    this.#puzzleIndex = (this.#puzzleIndex + 1) % PUZZLES.length;
+                    this.#initFromPuzzle(PUZZLES[this.#puzzleIndex]);
+                    this.#gameWon = false;
+                    this.#render();
+                    this.#attachEvents();
+                    localStorage.removeItem(STORAGE_KEY); // پاک کردن ذخیره قبلی
+                }
+
+                #toggleGuide() {
+                    this.#guideVisible = !this.#guideVisible;
+                    const panel = this.#container.querySelector('.guide-panel');
+                    const btn = this.#container.querySelector('.guide-toggle');
+                    if (panel) panel.classList.toggle('hidden', !this.#guideVisible);
+                    if (btn) btn.innerHTML = `📖 راهنمای فارسی ${this.#guideVisible ? '▲' : '▼'}`;
+                }
+
+                // ----- ذخیره و بازیابی (LocalStorage) -----
+                #saveGame() {
+                    const saveData = {
+                        puzzleIndex: this.#puzzleIndex,
+                        grid: this.#grid,
+                        gameWon: this.#gameWon,
+                        score: this.#score
+                    };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+                }
+
+                #autoSave() {
+                    this.#saveGame();
+                }
+
+                #loadSavedGame() {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (!saved) return;
+                    try {
+                        const data = JSON.parse(saved);
+                        if (data.puzzleIndex !== undefined && data.grid) {
+                            this.#puzzleIndex = data.puzzleIndex % PUZZLES.length;
+                            this.#size = PUZZLES[this.#puzzleIndex].size;
+                            this.#numbers = PUZZLES[this.#puzzleIndex].numbers;
+                            this.#grid = data.grid;
+                            this.#gameWon = data.gameWon || false;
+                            this.#score = data.score || this.#score;
+                            this.#render();
+                            this.#attachEvents();
+                            this.#updateWinMessage();
+                        }
+                    } catch (e) {}
+                }
+
+                #loadScore() {
+                    const s = localStorage.getItem(SCORE_KEY);
+                    if (s) this.#score = parseInt(s, 10) || 0;
+                }
+
+                #saveScore() {
+                    localStorage.setItem(SCORE_KEY, this.#score.toString());
+                }
+            }
+
+            // راه‌اندازی بازی داخل div با id مشخص
+            const container = document.getElementById('nurikabe-game');
+            if (container) {
+                new NurikabeGame(container);
+            } else {
+                console.warn('div با شناسه nurikabe-game پیدا نشد.');
+            }
+        })();
+    </script>
+</body>
+</html>

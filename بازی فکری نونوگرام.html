@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="fa" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>نانوگرام | بازی فکری ژاپنی</title>
+  <style>
+    /* ============================================
+       RESET & GLOBAL STYLES (استاندارد 2026)
+    ============================================ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, 'Segoe UI', 'Noto Sans', sans-serif;
+      background: #f1f4f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    /* فقط برای نمایش نمونه در این صفحه، در پروژه واقعی ظرف بازی انعطاف‌پذیر است */
+    .demo-wrapper {
+      max-width: 100%;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ============================================
+       کامپوننت اصلی نانوگرام (طراحی مدرن، ریسپانسیو)
+    ============================================ */
+    .nonogram-root {
+      --cell-size: clamp(28px, 6vw, 48px);
+      --hint-bg: #eef2f7;
+      --cell-bg-light: #ffffff;
+      --cell-bg-dark: #1e2a3a;
+      --border-color: #cbd5e1;
+      --accent-color: #2c7da0;
+      --success-color: #2a9d8f;
+      --text-primary: #0f172a;
+      --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.02);
+      --radius-md: 1rem;
+      --radius-sm: 0.75rem;
+      
+      background: white;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      padding: 1.2rem;
+      transition: all 0.2s ease;
+      width: fit-content;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    /* حالت دارک (بر اساس سیستم) */
+    @media (prefers-color-scheme: dark) {
+      .nonogram-root {
+        background: #1e293b;
+        --hint-bg: #0f172a;
+        --cell-bg-light: #334155;
+        --cell-bg-dark: #0f172a;
+        --border-color: #475569;
+        --text-primary: #f1f5f9;
+        --accent-color: #3b82f6;
+        --success-color: #2dd4bf;
+      }
+      body {
+        background: #0b1120;
+      }
+    }
+
+    /* هدر بازی شامل امتیاز و دکمه‌ها */
+    .game-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.8rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .score-box {
+      background: var(--hint-bg);
+      padding: 0.5rem 1.2rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--accent-color);
+      letter-spacing: 0.5px;
+      backdrop-filter: blur(2px);
+    }
+
+    .score-box span {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-left: 0.3rem;
+      color: var(--text-primary);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--hint-bg);
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 2rem;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: 0.15s linear;
+      color: var(--text-primary);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent-color);
+      color: white;
+      box-shadow: 0 2px 6px rgba(44,125,160,0.2);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(0.96);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    /* پیام وضعیت */
+    .message-area {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 0.6rem;
+      border-radius: 2rem;
+      background: var(--hint-bg);
+      color: var(--text-primary);
+      transition: 0.1s;
+      font-weight: 500;
+    }
+
+    /* ساختار اصلی جدول نانوگرام (grid پیشرفته) */
+    .nonogram-grid-container {
+      overflow-x: auto;
+      overflow-y: auto;
+      max-width: 100%;
+      padding: 0.25rem 0;
+    }
+
+    .nonogram-layout {
+      display: inline-grid;
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 2px;
+      background: var(--border-color);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      min-width: fit-content;
+    }
+
+    /* گوشه خالی بالا-چپ */
+    .corner-placeholder {
+      background: var(--hint-bg);
+      min-width: 70px;
+      min-height: 70px;
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+    }
+
+    /* بخش hints ستون‌ها (بالا) */
+    .col-hints {
+      background: var(--hint-bg);
+      display: grid;
+      gap: 1px;
+      padding: 4px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .col-hint-cell {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 2px;
+      background: var(--hint-bg);
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+    }
+
+    .col-hint-cell span {
+      display: block;
+      background: rgba(0,0,0,0.05);
+      width: 100%;
+      text-align: center;
+      padding: 2px 0;
+      border-radius: 6px;
+      font-size: 0.75rem;
+    }
+
+    /* بخش hints سطرها (سمت چپ) */
+    .row-hints {
+      background: var(--hint-bg);
+      display: grid;
+      gap: 1px;
+      padding: 4px;
+      border-right: 1px solid var(--border-color);
+    }
+
+    .row-hint-cell {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
+      padding: 0 6px;
+      background: var(--hint-bg);
+      font-weight: 600;
+      font-size: 0.8rem;
+      flex-wrap: wrap;
+      color: var(--text-primary);
+    }
+
+    .row-hint-cell span {
+      background: rgba(0,0,0,0.05);
+      padding: 2px 6px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+    }
+
+    /* تخته اصلی بازی (سلول‌ها) */
+    .game-board {
+      display: grid;
+      gap: 1px;
+      background: var(--border-color);
+      background-color: var(--border-color);
+    }
+
+    .cell {
+      background-color: var(--cell-bg-light);
+      aspect-ratio: 1 / 1;
+      width: var(--cell-size);
+      cursor: pointer;
+      transition: all 0.05s linear;
+      position: relative;
+      user-select: none;
+    }
+
+    /* سلول پر شده (مشکی/رنگی) */
+    .cell.filled {
+      background-color: #2c3e50;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .cell.filled {
+        background-color: #61dafb;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+      }
+    }
+
+    /* حالت hover برای تجربه بهتر */
+    .cell:hover {
+      filter: brightness(0.92);
+      transform: scale(0.98);
+    }
+
+    /* ریسپانسیو: در موبایل hints کوچک‌تر */
+    @media (max-width: 640px) {
+      .nonogram-root {
+        padding: 0.8rem;
+      }
+      .col-hint-cell span, .row-hint-cell span {
+        font-size: 0.65rem;
+        padding: 2px 3px;
+      }
+      .btn {
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+      }
+      .score-box {
+        font-size: 1rem;
+      }
+    }
+
+    /* انیمیشن موفقیت کوتاه */
+    @keyframes victoryPulse {
+      0% { background-color: var(--success-color); opacity: 0.7; }
+      100% { background-color: var(--cell-bg-light); }
+    }
+    .cell.victory-flash {
+      animation: victoryPulse 0.4s ease-out;
+    }
+  </style>
+</head>
+<body>
+<div class="demo-wrapper">
+  <!-- ظرفی که بازی با id مشخص در آن رندر می‌شود (قابل قرارگیری در هر نقطه) -->
+  <div id="nonogram-game-app"></div>
+</div>
+
+<script type="module">
+  /* ============================================================
+     Nonogram Game (ژاپنی نانوگرام) - استانداردهای 2026
+     - ذخیره خودکار در localStorage (وضعیت، امتیاز، پیشرفت)
+     - کاملاً ریسپانسیو و مدرن
+     - بدون وابستگی خارجی
+     - قابلیت mount در هر المان با id دلخواه
+  ============================================================ */
+
+  // ---------- تعریف پازل نمونه (۱۰x۱۰ طرح X شکل زیبا و متقارن) ----------
+  const SOLUTION_MATRIX = (() => {
+    const size = 10;
+    const grid = Array(size).fill().map(() => Array(size).fill(false));
+    // الگوی ضربدری (X) – استاندارد و جذاب
+    for (let i = 0; i < size; i++) {
+      grid[i][i] = true;                 // قطر اصلی
+      grid[i][size - 1 - i] = true;      // قطر فرعی
+    }
+    // برای زیبایی، یک قاب دورادور ساده (اختیاری) اما الگوی X ساده و سرراست است.
+    // در صورت تمایل می‌توان مرکز را پر کرد اما X برای یادگیری عالیست.
+    return grid;
+  })();
+
+  // محاسبه hints برای هر خط (آرایه‌ای از اعداد پشت سر هم)
+  function computeLineHints(lineCells) {
+    const hints = [];
+    let count = 0;
+    for (let i = 0; i < lineCells.length; i++) {
+      if (lineCells[i]) {
+        count++;
+      } else if (count > 0) {
+        hints.push(count);
+        count = 0;
+      }
+    }
+    if (count > 0) hints.push(count);
+    return hints.length === 0 ? [0] : hints; // نمایش صفر برای خطوط بدون بلوک
+  }
+
+  // محاسبه تمام hints سطری و ستونی از روی ماتریس ثابت (پازل اصلی)
+  function getAllHintsFromSolution(solution) {
+    const rows = solution.length;
+    const cols = solution[0].length;
+    const rowHints = [];
+    for (let r = 0; r < rows; r++) {
+      rowHints.push(computeLineHints(solution[r]));
+    }
+    const colHints = [];
+    for (let c = 0; c < cols; c++) {
+      const column = solution.map(row => row[c]);
+      colHints.push(computeLineHints(column));
+    }
+    return { rowHints, colHints };
+  }
+
+  // ---------- کلاس اصلی بازی (مدیریت وضعیت، رندر، ذخیره‌سازی) ----------
+  class NonogramGame {
+    #container;           // عنصر DOM که بازی در آن mount می‌شود
+    #solution;            // ماتریس اصلی (boolean)
+    #boardState;          // وضعیت فعلی کاربر (boolean: true=پر)
+    #puzzleSolved;        // آیا پازل در وضعیت حل شده قرار دارد (برای UI)
+    #hasEarnedScore;      // آیا کاربر قبلاً برای این پازل امتیاز گرفته؟
+    #score;               // امتیاز کل کاربر
+    #rowHints;            // hints سطری (محاسبه شده از solution)
+    #colHints;            // hints ستونی
+    #size;                // ابعاد (N x N)
+    
+    // المانهای DOM پویا
+    #boardEl;
+    #colHintsContainer;
+    #rowHintsContainer;
+    #scoreDisplay;
+    #messageEl;
+    
+    // شناسه localStorage
+    static STORAGE_KEY = 'nonogram_save_v2';
+    
+    constructor(containerElement) {
+      if (!containerElement) throw new Error('Container element required');
+      this.#container = containerElement;
+      this.#solution = SOLUTION_MATRIX;
+      this.#size = this.#solution.length;
+      const { rowHints, colHints } = getAllHintsFromSolution(this.#solution);
+      this.#rowHints = rowHints;
+      this.#colHints = colHints;
+      
+      // بارگذاری وضعیت ذخیره شده یا مقداردهی اولیه
+      this.#loadFromStorage();
+      
+      // رندر اولیه UI
+      this.#renderFullGame();
+    }
+    
+    // بارگذاری از localStorage (امتیاز، وضعیت تخته، پرچم‌ها)
+    #loadFromStorage() {
+      try {
+        const saved = localStorage.getItem(NonogramGame.STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          // تطابق نسخه: بررسی صحت ساختار
+          if (data.boardState && data.boardState.length === this.#size) {
+            this.#boardState = data.boardState;
+            this.#puzzleSolved = !!data.puzzleSolved;
+            this.#hasEarnedScore = !!data.hasEarnedScore;
+            this.#score = typeof data.score === 'number' ? data.score : 0;
+          } else {
+            this.#initFreshState();
+          }
+        } else {
+          this.#initFreshState();
+        }
+      } catch (e) {
+        console.warn("خطا در بارگذاری ذخیره:", e);
+        this.#initFreshState();
+      }
+      // اطمینان از امتیاز عددی
+      if (typeof this.#score !== 'number') this.#score = 0;
+    }
+    
+    #initFreshState() {
+      // حالت اولیه: تمام سلول‌ها خالی (false)
+      this.#boardState = Array(this.#size).fill().map(() => Array(this.#size).fill(false));
+      this.#puzzleSolved = false;
+      this.#hasEarnedScore = false;
+      this.#score = 0;
+    }
+    
+    // ذخیره وضعیت فعلی در localStorage (هر تغییری)
+    #saveToStorage() {
+      const saveData = {
+        boardState: this.#boardState,
+        puzzleSolved: this.#puzzleSolved,
+        hasEarnedScore: this.#hasEarnedScore,
+        score: this.#score,
+        version: 2,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(NonogramGame.STORAGE_KEY, JSON.stringify(saveData));
+    }
+    
+    // بررسی برد (آیا boardState با solution یکی است؟)
+    #checkVictory() {
+      for (let r = 0; r < this.#size; r++) {
+        for (let c = 0; c < this.#size; c++) {
+          if (this.#boardState[r][c] !== this.#solution[r][c]) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    
+    // مدیریت پیروزی و امتیازدهی هوشمند (جلوگیری از دوبار امتیاز)
+    #handleVictoryIfNeeded() {
+      const isComplete = this.#checkVictory();
+      if (isComplete && !this.#puzzleSolved) {
+        // پازل حل شد ولی هنوز پرچم solved فعال نشده
+        this.#puzzleSolved = true;
+        if (!this.#hasEarnedScore) {
+          this.#score += 1;
+          this.#hasEarnedScore = true;
+          this.#showMessage("🎉 تبریک! پازل را حل کردید! +1 امتیاز 🎉", "success");
+        } else {
+          this.#showMessage("✨ آفرین! دوباره حلش کردی (امتیاز قبلاً دریافت شده)", "info");
+        }
+        this.#updateScoreUI();
+        this.#saveToStorage();
+        this.#animateVictoryFlash();
+      } else if (!isComplete && this.#puzzleSolved) {
+        // اگر کاربر پس از حل کامل، سلولی را تغییر داد و پازل ناقص شد
+        this.#puzzleSolved = false;
+        this.#showMessage("پازل ناقص شد، به تلاش ادامه دهید!", "info");
+        this.#saveToStorage();
+      } else if (isComplete && this.#puzzleSolved) {
+        // از قبل حل شده بود و دوباره بررسی شد (ممکن است بعد از reset ناقص شود)
+        // در این حالت کاری نمی‌کنیم
+      }
+      // آپدیت UI پیام در صورت عدم تغییر خاص
+      if (!isComplete && !this.#puzzleSolved && !this.#hasEarnedScore) {
+        // حالت عادی
+      }
+    }
+    
+    #animateVictoryFlash() {
+      if (!this.#boardEl) return;
+      const cells = this.#boardEl.querySelectorAll('.cell');
+      cells.forEach(cell => {
+        cell.classList.add('victory-flash');
+        setTimeout(() => cell.classList.remove('victory-flash'), 500);
+      });
+    }
+    
+    #showMessage(msg, type = 'info') {
+      if (this.#messageEl) {
+        this.#messageEl.textContent = msg;
+        this.#messageEl.style.opacity = '1';
+        if (type === 'success') {
+          this.#messageEl.style.background = 'var(--success-color)';
+          this.#messageEl.style.color = 'white';
+        } else {
+          this.#messageEl.style.background = 'var(--hint-bg)';
+          this.#messageEl.style.color = 'var(--text-primary)';
+        }
+        setTimeout(() => {
+          if (this.#messageEl && this.#messageEl.textContent === msg) {
+            // محو نشود، ولی بعد از 3 ثانیه پیام پیش‌فرض
+            setTimeout(() => {
+              if (this.#messageEl && this.#messageEl.textContent === msg)
+                this.#messageEl.textContent = '👾 روی سلول‌ها کلیک کنید تا تصویر نمایان شود';
+            }, 2800);
+          }
+        }, 2500);
+      }
+    }
+    
+    #updateScoreUI() {
+      if (this.#scoreDisplay) {
+        this.#scoreDisplay.textContent = this.#score;
+      }
+    }
+    
+    // رندر کل ساختار (grid، hints، تخته)
+    #renderFullGame() {
+      this.#container.innerHTML = ''; // پاکسازی قبلی
+      const rootDiv = document.createElement('div');
+      rootDiv.className = 'nonogram-root';
+      
+      // هدر
+      const header = document.createElement('div');
+      header.className = 'game-header';
+      header.innerHTML = `
+        <div class="score-box">🏆 امتیاز: <span id="nonogram-score-value">${this.#score}</span></div>
+        <div class="button-group">
+          <button class="btn" id="reset-game-btn">🔄 ریست پازل</button>
+          <button class="btn btn-primary" id="new-clear-btn">🧽 پاک کردن همه</button>
+        </div>
+      `;
+      rootDiv.appendChild(header);
+      
+      // منطقه پیام
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message-area';
+      msgDiv.textContent = '🎯 روی خانه‌ها کلیک کنید (سیاه = پر)';
+      rootDiv.appendChild(msgDiv);
+      
+      // کانتینر اسکرول‌دار جدول
+      const gridContainer = document.createElement('div');
+      gridContainer.className = 'nonogram-grid-container';
+      
+      const layout = document.createElement('div');
+      layout.className = 'nonogram-layout';
+      
+      // گوشه
+      const corner = document.createElement('div');
+      corner.className = 'corner-placeholder';
+      layout.appendChild(corner);
+      
+      // ستون hints
+      const colHintsWrap = document.createElement('div');
+      colHintsWrap.className = 'col-hints';
+      colHintsWrap.style.gridTemplateColumns = `repeat(${this.#size}, minmax(var(--cell-size), auto))`;
+      // پر کردن hints ستون‌ها
+      for (let c = 0; c < this.#size; c++) {
+        const hints = this.#colHints[c];
+        const hintDiv = document.createElement('div');
+        hintDiv.className = 'col-hint-cell';
+        // نمایش اعداد از بالا به پایین (جهت استاندارد)
+        hints.forEach(num => {
+          const span = document.createElement('span');
+          span.textContent = num === 0 ? '·' : num;
+          hintDiv.appendChild(span);
+        });
+        colHintsWrap.appendChild(hintDiv);
+      }
+      layout.appendChild(colHintsWrap);
+      
+      // سمت چپ: hints سطری
+      const rowHintsWrap = document.createElement('div');
+      rowHintsWrap.className = 'row-hints';
+      rowHintsWrap.style.gridTemplateRows = `repeat(${this.#size}, var(--cell-size))`;
+      for (let r = 0; r < this.#size; r++) {
+        const hints = this.#rowHints[r];
+        const hintRowDiv = document.createElement('div');
+        hintRowDiv.className = 'row-hint-cell';
+        hints.forEach(num => {
+          const span = document.createElement('span');
+          span.textContent = num === 0 ? '·' : num;
+          hintRowDiv.appendChild(span);
+        });
+        rowHintsWrap.appendChild(hintRowDiv);
+      }
+      layout.appendChild(rowHintsWrap);
+      
+      // تخته اصلی
+      const board = document.createElement('div');
+      board.className = 'game-board';
+      board.style.gridTemplateColumns = `repeat(${this.#size}, var(--cell-size))`;
+      board.style.gridTemplateRows = `repeat(${this.#size}, var(--cell-size))`;
+      
+      // ساخت سلول‌ها با dataset
+      for (let r = 0; r < this.#size; r++) {
+        for (let c = 0; c < this.#size; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          if (this.#boardState[r][c] === true) cell.classList.add('filled');
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          board.appendChild(cell);
+        }
+      }
+      layout.appendChild(board);
+      gridContainer.appendChild(layout);
+      rootDiv.appendChild(gridContainer);
+      
+      this.#container.appendChild(rootDiv);
+      
+      // ذخیره ارجاع به المان‌های مهم
+      this.#boardEl = board;
+      this.#colHintsContainer = colHintsWrap;
+      this.#rowHintsContainer = rowHintsWrap;
+      this.#scoreDisplay = document.getElementById('nonogram-score-value');
+      this.#messageEl = msgDiv;
+      this.#updateScoreUI();
+      
+      // رویدادهای کلیک (event delegation)
+      this.#attachEvents();
+      
+      // دکمه‌ها
+      const resetBtn = rootDiv.querySelector('#reset-game-btn');
+      const clearBtn = rootDiv.querySelector('#new-clear-btn');
+      if (resetBtn) resetBtn.addEventListener('click', () => this.#resetGame());
+      if (clearBtn) clearBtn.addEventListener('click', () => this.#clearAllCells());
+    }
+    
+    #attachEvents() {
+      if (!this.#boardEl) return;
+      // مدیریت کلیک چپ برای تغییر وضعیت سلول
+      this.#boardEl.addEventListener('click', (e) => {
+        let target = e.target;
+        while (target && !target.classList?.contains('cell')) {
+          target = target.parentElement;
+          if (target === this.#boardEl) break;
+        }
+        if (target && target.classList.contains('cell')) {
+          const row = parseInt(target.dataset.row);
+          const col = parseInt(target.dataset.col);
+          if (!isNaN(row) && !isNaN(col)) {
+            this.#toggleCell(row, col);
+          }
+          e.preventDefault();
+        }
+      });
+      
+      // جلوگیری از منوی راست کلیک روی سلول‌ها
+      this.#boardEl.addEventListener('contextmenu', (e) => {
+        let target = e.target;
+        while (target && !target.classList?.contains('cell')) target = target.parentElement;
+        if (target?.classList?.contains('cell')) {
+          e.preventDefault();
+          // اختیاری: می‌توان با راست کلیک علامت X گذاشت اما استاندارد نانوگرام اصلی کلیک چپ کافیست
+          // برای سادگی، راست کلیک غیرفعال شده
+          return false;
+        }
+      });
+    }
+    
+    #toggleCell(row, col) {
+      // اگر پازل قبلا حل شده بود و کاربر دوباره تغییر دهد، پرچم solved false می‌شود.
+      if (this.#puzzleSolved) {
+        this.#puzzleSolved = false;
+      }
+      // تغییر وضعیت سلول (پر/خالی)
+      this.#boardState[row][col] = !this.#boardState[row][col];
+      // به روز رسانی UI سریع (به جای رندر کل، فقط کلاس همان سلول)
+      const cellIndex = row * this.#size + col;
+      const targetCell = this.#boardEl?.children[cellIndex];
+      if (targetCell) {
+        if (this.#boardState[row][col]) {
+          targetCell.classList.add('filled');
+        } else {
+          targetCell.classList.remove('filled');
+        }
+      }
+      // بررسی برد و به روز رسانی امتیاز و ذخیره
+      this.#handleVictoryIfNeeded();
+      this.#saveToStorage();
+      // در صورت برد پیام قبلاً نشان داده شد
+      if (!this.#checkVictory()) {
+        // اگر پیام موفقیت داشت و ناقص شد، پیام عادی
+        if (this.#messageEl && !this.#messageEl.textContent.includes('تبریک')) {
+          // نگهداری پیام عادی
+        }
+      }
+    }
+    
+    #resetGame() {
+      // ریست کامل وضعیت تخته به تمام false (خالی)، بدون تغییر امتیاز قبلی
+      for (let r = 0; r < this.#size; r++) {
+        for (let c = 0; c < this.#size; c++) {
+          this.#boardState[r][c] = false;
+        }
+      }
+      this.#puzzleSolved = false;
+      // NOTE: hasEarnedScore را تغییر نمی‌دهیم تا کاربر نتواند چندبار امتیاز بگیرد
+      // (فقط اگر قبلاً امتیاز نگرفته باشد، با حل دوباره خواهد گرفت)
+      this.#saveToStorage();
+      this.#rerenderBoardOnly();
+      this.#showMessage("بازی ریست شد. دوباره تلاش کنید!", "info");
+    }
+    
+    #clearAllCells() {
+      // پاک کردن همه سلول‌ها بدون تغییر امتیاز و پرچم‌ها (مشابه reset)
+      for (let r = 0; r < this.#size; r++) {
+        for (let c = 0; c < this.#size; c++) {
+          this.#boardState[r][c] = false;
+        }
+      }
+      this.#puzzleSolved = false;
+      this.#saveToStorage();
+      this.#rerenderBoardOnly();
+      this.#showMessage("همه خانه‌ها پاک شدند، از نو شروع کنید", "info");
+    }
+    
+    #rerenderBoardOnly() {
+      if (!this.#boardEl) return;
+      const cells = this.#boardEl.children;
+      for (let i = 0; i < cells.length; i++) {
+        const r = Math.floor(i / this.#size);
+        const c = i % this.#size;
+        const isFilled = this.#boardState[r][c];
+        if (isFilled) {
+          cells[i].classList.add('filled');
+        } else {
+          cells[i].classList.remove('filled');
+        }
+      }
+      // پس از رندر دوباره وضعیت برد چک شود
+      this.#handleVictoryIfNeeded();
+    }
+  }
+  
+  // ---------- راه‌اندازی بازی در المان با شناسه دلخواه ----------
+  function mountNonogramGame(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+      console.error(`Element with id "${containerId}" not found.`);
+      return null;
+    }
+    // حذف محتوای قبلی احتمالی
+    container.innerHTML = '';
+    const game = new NonogramGame(container);
+    return game;
+  }
+  
+  // اجرای مستقیم هنگام بارگذاری (برای این دمو)
+  window.addEventListener('DOMContentLoaded', () => {
+    mountNonogramGame('nonogram-game-app');
+  });
+  
+  // همچنین در صورت نیاز دسترسی global جهت استفاده مجدد (اختیاری)
+  window.mountNonogramGame = mountNonogramGame;
+</script>
+</body>
+</html>

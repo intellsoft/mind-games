@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>موزاییک ژاپنی | معمای منطقی</title>
+    <style>
+        /* === استانداردهای ۲۰۲۶: CSS modern, nesting, container queries (fallback) === */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f8f4eb;
+            --surface: #ffffffd9;
+            --primary: #2c3e50;
+            --accent: #c44536;
+            --cell-bg: #f0e9de;
+            --cell-border: #b7a99a;
+            --filled: #1e2b36;
+            --cross: #9b9b9b;
+            --shadow: 0 12px 28px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.02);
+            --radius: 24px;
+            --radius-sm: 14px;
+            --font: 'Segoe UI', 'Vazirmatn', system-ui, sans-serif;
+        }
+
+        body {
+            background: #e8e0d5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font);
+            padding: 16px;
+            margin: 0;
+        }
+
+        /* === کانتینر اصلی بازی (شناسه ثابت) === */
+        #mosaic-game {
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+            background: var(--surface);
+            backdrop-filter: blur(4px);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px 20px 28px;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* === تایپوگرافی و المان‌های داخلی === */
+        .game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h2 {
+            font-weight: 600;
+            font-size: 1.8rem;
+            letter-spacing: -0.01em;
+            color: var(--primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .score-badge {
+            background: var(--primary);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 60px;
+            font-weight: 500;
+            font-size: 1.2rem;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0 12px;
+        }
+
+        .btn {
+            background: white;
+            border: 1px solid #ddd2c4;
+            padding: 10px 18px;
+            border-radius: 60px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            transition: all 0.15s;
+            font-family: inherit;
+            backdrop-filter: blur(4px);
+            background: rgba(255, 255, 255, 0.7);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex: 0 1 auto;
+        }
+
+        .btn:hover {
+            background: white;
+            border-color: var(--accent);
+            box-shadow: 0 8px 14px rgba(196, 69, 54, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .mode-indicator {
+            margin-right: auto;
+            font-size: 0.9rem;
+            padding: 6px 12px;
+            background: #e6ddd2;
+            border-radius: 30px;
+            color: #2e241e;
+        }
+
+        /* === ناحیه تخته بازی (Grid واکنش‌گرا) === */
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0 5px;
+            overflow-x: auto;
+            overflow-y: visible;
+            padding: 4px 2px;
+            scrollbar-width: thin;
+        }
+
+        .nonogram-grid {
+            display: inline-grid;
+            background: #d9cdc0;
+            padding: 6px;
+            border-radius: 20px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.05), 0 4px 10px rgba(0,0,0,0.05);
+            gap: 2px;
+            /* تعداد ستون‌ها به‌صورت داینامیک با JS تنظیم می‌شود */
+        }
+
+        .cell {
+            width: min(10vw, 52px);
+            height: min(10vw, 52px);
+            max-width: 56px;
+            max-height: 56px;
+            min-width: 32px;
+            min-height: 32px;
+            background: var(--cell-bg);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--primary);
+            transition: background 0.1s, box-shadow 0.1s;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02);
+            cursor: pointer;
+            user-select: none;
+            font-size: 1rem;
+            aspect-ratio: 1 / 1;
+        }
+
+        /* سلول‌های راهنما */
+        .cell.clue {
+            background: #d4c9bc;
+            box-shadow: inset 0 0 0 1px #bcab9a;
+            color: #1f1a16;
+            font-weight: 500;
+            cursor: default;
+            font-size: clamp(0.8rem, 3vw, 1.1rem);
+        }
+
+        .cell.clue.top {
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 4px;
+        }
+
+        .cell.clue.left {
+            justify-content: flex-end;
+            padding-left: 4px;
+        }
+
+        /* حالت‌های خانه‌های بازی */
+        .cell.playable.filled {
+            background: var(--filled);
+            box-shadow: inset 0 0 0 2px #33485d, 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .cell.playable.crossed {
+            background: var(--cross);
+            position: relative;
+            color: #4a3f37;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell.playable.crossed::after {
+            content: "✕";
+            font-size: 1.6em;
+            font-weight: 300;
+            color: #4d2e1b;
+            opacity: 0.7;
+        }
+
+        /* پیغام پیروزی */
+        .win-message {
+            text-align: center;
+            margin-top: 18px;
+            font-weight: 600;
+            color: #2b6e4f;
+            background: #dff3e3;
+            padding: 12px;
+            border-radius: 50px;
+            animation: fade 0.3s;
+        }
+
+        .help-panel {
+            background: #f3efe8;
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin: 22px 0 8px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            border-right: 5px solid var(--accent);
+            color: #2c3e50;
+        }
+
+        .help-panel details summary {
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .help-panel details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* رسپانسیو ریز */
+        @media (max-width: 480px) {
+            #mosaic-game { padding: 18px 12px; }
+            .btn { padding: 8px 14px; font-size: 0.85rem; }
+            .cell { min-width: 30px; min-height: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- بازی دقیقاً داخل این div با id ثابت ظاهر می‌شود -->
+<div id="mosaic-game"></div>
+
+<script>
+    (function(){
+        "use strict";
+
+        // ---------- استاندارد ۲۰۲۶: ماژولار، کلاس محور، async/localStorage مدیریت شده ----------
+        const STORAGE_KEY = 'mosaic_jp_save_v1';
+        const GAME_CONTAINER_ID = 'mosaic-game';
+
+        // پازل‌های پیش‌فرض (سه طرح ساده ۵x۵)
+        const PUZZLE_LIBRARY = [
+            {   // قلب کوچک
+                name: '❤️ قلب',
+                grid: [
+                    [0,1,0,1,0],
+                    [1,1,1,1,1],
+                    [1,1,1,1,1],
+                    [0,1,1,1,0],
+                    [0,0,1,0,0]
+                ]
+            },
+            {   // پله
+                name: '📐 پله',
+                grid: [
+                    [1,0,0,0,0],
+                    [1,1,0,0,0],
+                    [1,1,1,0,0],
+                    [1,1,1,1,0],
+                    [1,1,1,1,1]
+                ]
+            },
+            {   // مربع توخالی
+                name: '⬛ قاب',
+                grid: [
+                    [1,1,1,1,1],
+                    [1,0,0,0,1],
+                    [1,0,0,0,1],
+                    [1,0,0,0,1],
+                    [1,1,1,1,1]
+                ]
+            }
+        ];
+
+        // ---------- کلاس اصلی بازی ----------
+        class MosaicGame {
+            constructor(containerElement) {
+                this.container = containerElement;
+                this.size = 5;             // ابعاد فعلی (۵x۵)
+                this.currentPuzzleIndex = 0;
+                this.solution = [];          // ماتریس boolean
+                this.rowClues = [];
+                this.colClues = [];
+                // وضعیت کاربر: null (خالی), true (پر), 'x' (ضربدر)
+                this.userGrid = [];
+                this.score = 0;
+                this.solved = false;         // آیا پازل جاری حل شده؟
+                this.mode = 'fill';           // 'fill' یا 'cross'
+                
+                // binding
+                this.handleCellClick = this.handleCellClick.bind(this);
+                this.handleContextMenu = this.handleContextMenu.bind(this);
+                
+                this.init();
+            }
+
+            // مقداردهی اولیه
+            init() {
+                this.loadFromStorage();
+                if (!this.userGrid.length) {
+                    // اگر ذخیره‌ای نبود، پازل اول را بارگذاری کن
+                    this.loadPuzzle(0);
+                } else {
+                    // بازیابی راهنماها بر اساس solution ذخیره شده
+                    this.recalculateClues();
+                    this.solved = this.checkVictory();
+                }
+                this.render();
+                this.attachGlobalListeners();
+            }
+
+            // بارگذاری پازل با ایندکس
+            loadPuzzle(index) {
+                const puzzle = PUZZLE_LIBRARY[index];
+                this.currentPuzzleIndex = index;
+                this.size = puzzle.grid.length;
+                this.solution = puzzle.grid.map(row => row.map(cell => cell === 1));
+                this.recalculateClues();
+                // ساخت userGrid خالی
+                this.userGrid = Array(this.size).fill().map(() => Array(this.size).fill(null));
+                this.solved = false;
+                // امتیاز فقط در صورت حل شدن جدید اضافه می‌شود (در متد tryAddScore)
+                this.saveToStorage();
+            }
+
+            // محاسبه راهنماهای سطر و ستون
+            recalculateClues() {
+                this.rowClues = this.solution.map(row => this.getClueFromLine(row));
+                this.colClues = [];
+                for (let c = 0; c < this.size; c++) {
+                    const col = this.solution.map(row => row[c]);
+                    this.colClues.push(this.getClueFromLine(col));
+                }
+            }
+
+            getClueFromLine(line) {
+                const clues = [];
+                let count = 0;
+                for (let val of line) {
+                    if (val) count++;
+                    else if (count > 0) {
+                        clues.push(count);
+                        count = 0;
+                    }
+                }
+                if (count > 0) clues.push(count);
+                return clues.length ? clues : [0];
+            }
+
+            // بررسی برد
+            checkVictory() {
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        const user = this.userGrid[r][c];
+                        const sol = this.solution[r][c];
+                        // خانه باید دقیقاً مطابق solution پر/خالی باشد (علامت X معادل خالی در نظر گرفته می‌شود)
+                        if (sol && user !== true) return false;
+                        if (!sol && user === true) return false;
+                    }
+                }
+                return true;
+            }
+
+            // تلاش برای افزودن امتیاز (فقط یکبار به ازای حل)
+            tryAddScore() {
+                if (this.checkVictory() && !this.solved) {
+                    this.solved = true;
+                    this.score += 100;
+                    this.saveToStorage();
+                    this.render(); // بروزرسانی نمایش امتیاز و پیغام
+                    return true;
+                }
+                return false;
+            }
+
+            // مدیریت کلیک روی خانه‌های بازی
+            handleCellClick(e) {
+                const cellDiv = e.currentTarget;
+                const row = parseInt(cellDiv.dataset.row);
+                const col = parseInt(cellDiv.dataset.col);
+                if (isNaN(row) || isNaN(col)) return;
+                
+                const current = this.userGrid[row][col];
+                if (this.mode === 'fill') {
+                    // چرخش: null -> true (پر) -> 'x' (ضربدر) -> null
+                    if (current === null) this.userGrid[row][col] = true;
+                    else if (current === true) this.userGrid[row][col] = 'x';
+                    else this.userGrid[row][col] = null;
+                } else { // mode = 'cross'
+                    if (current === null) this.userGrid[row][col] = 'x';
+                    else if (current === 'x') this.userGrid[row][col] = true;
+                    else this.userGrid[row][col] = null;
+                }
+                
+                this.saveToStorage();
+                const victory = this.tryAddScore();
+                this.render();
+            }
+
+            handleContextMenu(e) {
+                e.preventDefault(); // جلوگیری از منوی راست کلیک
+                // در صورت نیاز می‌توان عملکرد خاصی گذاشت، اما ما از دکمه mode استفاده می‌کنیم
+                return false;
+            }
+
+            // ذخیره در localStorage
+            saveToStorage() {
+                const saveData = {
+                    puzzleIndex: this.currentPuzzleIndex,
+                    userGrid: this.userGrid,
+                    score: this.score,
+                    solved: this.solved,
+                    solution: this.solution,   // برای بازیابی راهنماها
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+            }
+
+            loadFromStorage() {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return false;
+                try {
+                    const data = JSON.parse(raw);
+                    if (data && Array.isArray(data.userGrid) && data.solution) {
+                        this.currentPuzzleIndex = data.puzzleIndex ?? 0;
+                        this.userGrid = data.userGrid;
+                        this.score = data.score ?? 0;
+                        this.solved = data.solved ?? false;
+                        this.solution = data.solution;
+                        this.size = this.solution.length;
+                        this.recalculateClues();
+                        return true;
+                    }
+                } catch (e) {
+                    console.warn("خطا در بارگذاری ذخیره:", e);
+                }
+                return false;
+            }
+
+            // ریست کردن تخته به حالت خالی (بدون تغییر پازل)
+            resetBoard() {
+                this.userGrid = Array(this.size).fill().map(() => Array(this.size).fill(null));
+                this.solved = false;
+                this.saveToStorage();
+                this.render();
+            }
+
+            // تغییر پازل
+            changePuzzle(index) {
+                this.loadPuzzle(index);
+                this.render();
+            }
+
+            // تغییر حالت پر/ضربدر
+            toggleMode() {
+                this.mode = this.mode === 'fill' ? 'cross' : 'fill';
+                this.render();
+            }
+
+            // ---------- رندر کامل ----------
+            render() {
+                this.container.innerHTML = '';
+                
+                // ساختار اصلی
+                const wrapper = document.createElement('div');
+                wrapper.className = 'game-wrapper';
+                
+                // هدر
+                const header = document.createElement('div');
+                header.className = 'game-header';
+                header.innerHTML = `
+                    <h2>🧩 موزاییک ژاپنی</h2>
+                    <div class="score-badge">🏆 ${this.score}</div>
+                `;
+                
+                // نوار ابزار
+                const toolbar = document.createElement('div');
+                toolbar.className = 'toolbar';
+                
+                const modeBtn = document.createElement('button');
+                modeBtn.className = `btn ${this.mode === 'cross' ? 'active' : ''}`;
+                modeBtn.innerHTML = this.mode === 'fill' ? '🖌️ مد: پر کردن' : '❌ مد: علامت ضربدر';
+                modeBtn.addEventListener('click', () => {
+                    this.toggleMode();
+                });
+                
+                const resetBtn = document.createElement('button');
+                resetBtn.className = 'btn';
+                resetBtn.innerHTML = '🔄 پاک کردن تخته';
+                resetBtn.addEventListener('click', () => this.resetBoard());
+                
+                const newBtn = document.createElement('button');
+                newBtn.className = 'btn';
+                newBtn.innerHTML = '✨ پازل جدید';
+                newBtn.addEventListener('click', () => {
+                    const next = (this.currentPuzzleIndex + 1) % PUZZLE_LIBRARY.length;
+                    this.changePuzzle(next);
+                });
+                
+                const puzzleSelect = document.createElement('select');
+                puzzleSelect.className = 'btn';
+                puzzleSelect.style.cssText = 'padding: 10px 16px;';
+                PUZZLE_LIBRARY.forEach((p, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = idx;
+                    opt.textContent = p.name;
+                    if (idx === this.currentPuzzleIndex) opt.selected = true;
+                    puzzleSelect.appendChild(opt);
+                });
+                puzzleSelect.addEventListener('change', (e) => {
+                    this.changePuzzle(parseInt(e.target.value));
+                });
+                
+                toolbar.appendChild(modeBtn);
+                toolbar.appendChild(resetBtn);
+                toolbar.appendChild(newBtn);
+                toolbar.appendChild(puzzleSelect);
+                
+                // تخته بازی
+                const boardContainer = document.createElement('div');
+                boardContainer.className = 'board-container';
+                
+                const gridEl = document.createElement('div');
+                gridEl.className = 'nonogram-grid';
+                // تنظیم ستون‌های گرید: 1 + اندازه (برای راهنماها)
+                gridEl.style.gridTemplateColumns = `auto repeat(${this.size}, 1fr)`;
+                
+                // ردیف اول: سلول خالی گوشه + راهنماهای ستون
+                const corner = document.createElement('div');
+                corner.className = 'cell clue';
+                corner.textContent = '';
+                gridEl.appendChild(corner);
+                
+                for (let c = 0; c < this.size; c++) {
+                    const clueDiv = document.createElement('div');
+                    clueDiv.className = 'cell clue top';
+                    clueDiv.textContent = this.colClues[c].join(' ');
+                    gridEl.appendChild(clueDiv);
+                }
+                
+                // سطرهای بعدی: راهنما سمت چپ + سلول‌های بازی
+                for (let r = 0; r < this.size; r++) {
+                    // راهنمای سطر
+                    const rowClueDiv = document.createElement('div');
+                    rowClueDiv.className = 'cell clue left';
+                    rowClueDiv.textContent = this.rowClues[r].join(' ');
+                    gridEl.appendChild(rowClueDiv);
+                    
+                    for (let c = 0; c < this.size; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell playable';
+                        cell.dataset.row = r;
+                        cell.dataset.col = c;
+                        
+                        const val = this.userGrid[r][c];
+                        if (val === true) cell.classList.add('filled');
+                        else if (val === 'x') cell.classList.add('crossed');
+                        
+                        cell.addEventListener('click', this.handleCellClick);
+                        cell.addEventListener('contextmenu', this.handleContextMenu);
+                        gridEl.appendChild(cell);
+                    }
+                }
+                
+                boardContainer.appendChild(gridEl);
+                
+                // پیغام پیروزی
+                const winDiv = document.createElement('div');
+                if (this.solved) {
+                    winDiv.className = 'win-message';
+                    winDiv.textContent = '🎉 آفرین! پازل حل شد! ۱۰۰ امتیاز گرفتی 🎉';
+                }
+                
+                // راهنمای فارسی (بخش تاشو)
+                const helpDiv = document.createElement('div');
+                helpDiv.className = 'help-panel';
+                helpDiv.innerHTML = `
+                    <details>
+                        <summary>📘 راهنمای بازی موزاییک ژاپنی</summary>
+                        <div style="margin-top: 14px;">
+                            <p>🔹 اعداد کنار سطرها و ستون‌ها، تعداد خانه‌های پشت سر هم سیاه را نشان می‌دهند.<br>
+                            🔹 با کلیک روی خانه‌ها می‌توانید آن را <strong>سیاه (پر)</strong> یا <strong>ضربدر (خالی قطعی)</strong> کنید.<br>
+                            🔹 دکمه تغییر مد بین «پر کردن» و «علامت ضربدر» جابجا می‌شود.<br>
+                            🔹 بازی به‌طور خودکار ذخیره می‌شود و امتیاز شما با حل هر پازل ۱۰۰ تا افزایش می‌یابد.<br>
+                            🔸 برای پازل جدید از منوی کشویی یا دکمه «پازل جدید» استفاده کنید.</p>
+                        </div>
+                    </details>
+                `;
+                
+                wrapper.appendChild(header);
+                wrapper.appendChild(toolbar);
+                wrapper.appendChild(boardContainer);
+                if (this.solved) wrapper.appendChild(winDiv);
+                wrapper.appendChild(helpDiv);
+                
+                this.container.appendChild(wrapper);
+            }
+
+            attachGlobalListeners() {
+                // جلوگیری از منوی راست کلیک در کل کانتینر
+                this.container.addEventListener('contextmenu', (e) => {
+                    if (e.target.classList.contains('playable')) e.preventDefault();
+                });
+            }
+        }
+
+        // ---------- راه‌اندازی با شناسه ثابت ----------
+        function initMosaicGame() {
+            const container = document.getElementById(GAME_CONTAINER_ID);
+            if (!container) {
+                console.error(`عنصری با شناسه "${GAME_CONTAINER_ID}" یافت نشد.`);
+                return;
+            }
+            // پاکسازی محتوای احتمالی
+            container.innerHTML = '';
+            const game = new MosaicGame(container);
+            // ذخیره نمونه روی container برای دسترسی احتمالی (اختیاری)
+            container._mosaicGame = game;
+        }
+
+        // اجرا پس از بارگذاری کامل
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMosaicGame);
+        } else {
+            initMosaicGame();
+        }
+
+        // امکان فراخوانی مجدد (در صورت نیاز)
+        window.MosaicGame = { init: initMosaicGame };
+    })();
+</script>
+
+</body>
+</html>

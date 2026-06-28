@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>بازی فوتوشیکی (Futoshiki) - معمای منطقی ژاپنی</title>
+  <style>
+    /* ----- استانداردهای ۲۰۲۶: متغیرهای CSS، طراحی واکنش‌گرا، حالت تاریک/روشن پویا ----- */
+    :root {
+      --primary-color: #2c3e50;
+      --accent-color: #e67e22;
+      --bg-color: #f8f9fa;
+      --cell-bg: #ffffff;
+      --fixed-bg: #ecf0f1;
+      --border-color: #bdc3c7;
+      --error-bg: #fadbd8;
+      --success-color: #27ae60;
+      --text-dark: #2c3e50;
+      --text-light: #ffffff;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+      --border-radius: 12px;
+      --cell-size: clamp(48px, 12vw, 70px);
+      --gap-size: clamp(4px, 2vw, 10px);
+      --font-family: 'Segoe UI', 'Vazirmatn', system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-color);
+      color: var(--text-dark);
+      line-height: 1.6;
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* کانتینر اصلی بازی - با یک ID مشخص در صفحه جاسازی می‌شود */
+    #futoshiki-game {
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+      background: var(--cell-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-md);
+      padding: 20px 16px;
+      transition: all 0.2s;
+    }
+
+    /* بخش امتیاز و کنترل‌ها */
+    .game-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+
+    .score-box {
+      background: var(--primary-color);
+      color: var(--text-light);
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--cell-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-dark);
+      padding: 8px 14px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.15s;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn:hover {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    .btn.primary {
+      background: var(--accent-color);
+      color: white;
+      border-color: var(--accent-color);
+    }
+
+    .btn.primary:hover {
+      background: #d35400;
+    }
+
+    /* راهنمای بازی */
+    .guide-section {
+      margin: 16px 0 8px;
+    }
+
+    .guide-toggle {
+      background: none;
+      border: none;
+      color: var(--accent-color);
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .guide-content {
+      background: #f1f5f9;
+      padding: 14px 18px;
+      border-radius: 16px;
+      margin-top: 10px;
+      font-size: 0.95rem;
+      border-right: 4px solid var(--accent-color);
+      display: none;
+    }
+
+    .guide-content.show {
+      display: block;
+    }
+
+    .guide-content ul {
+      padding-right: 20px;
+      margin: 8px 0;
+    }
+
+    .guide-content li {
+      margin-bottom: 6px;
+    }
+
+    /* تخته بازی - گرید اصلی */
+    .futoshiki-board {
+      display: grid;
+      justify-content: center;
+      margin: 10px 0 15px;
+      background: var(--border-color);
+      padding: var(--gap-size);
+      border-radius: 16px;
+      gap: var(--gap-size);
+      box-shadow: inset 0 0 0 1px var(--border-color);
+    }
+
+    /* سلول‌ها و خانه‌های نماد */
+    .cell {
+      background: var(--cell-bg);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--text-dark);
+      box-shadow: var(--shadow-sm);
+      transition: background 0.1s;
+      aspect-ratio: 1 / 1;
+      width: var(--cell-size);
+      height: var(--cell-size);
+      position: relative;
+    }
+
+    .cell.fixed {
+      background: var(--fixed-bg);
+      color: #1e293b;
+      font-weight: 700;
+    }
+
+    .cell.error {
+      background: var(--error-bg);
+      border: 2px solid #e74c3c;
+    }
+
+    .cell-input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      text-align: center;
+      font-size: inherit;
+      font-weight: inherit;
+      font-family: inherit;
+      color: inherit;
+      outline: none;
+      border-radius: 8px;
+      padding: 0;
+      -moz-appearance: textfield;
+    }
+
+    .cell-input::-webkit-outer-spin-button,
+    .cell-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .cell-input:focus {
+      background: rgba(230, 126, 34, 0.1);
+      box-shadow: inset 0 0 0 2px var(--accent-color);
+    }
+
+    /* نمادهای نابرابری */
+    .constraint-symbol {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      background: transparent;
+      width: 28px;
+      height: 28px;
+    }
+
+    /* پیام وضعیت */
+    .status-message {
+      text-align: center;
+      margin: 12px 0 0;
+      font-weight: 500;
+      min-height: 28px;
+    }
+
+    .win-message {
+      color: var(--success-color);
+      font-weight: bold;
+      animation: pulse 1s;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    /* رسپانسیو برای موبایل */
+    @media (max-width: 480px) {
+      #futoshiki-game {
+        padding: 12px 8px;
+      }
+      .btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+      }
+      .cell {
+        font-size: 1.2rem;
+      }
+      .constraint-symbol {
+        font-size: 1.5rem;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    /* انتخاب پازل */
+    .puzzle-selector {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <!-- این div با id مشخص، بازی در آن رندر می‌شود و می‌توان آن را هر جای صفحه جاسازی کرد -->
+  <div id="futoshiki-game"></div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      // ---------- استاندارد ۲۰۲۶: کلاس با فیلدهای خصوصی ----------
+      class FutoshikiGame {
+        // پازل‌های پیش‌فرض (سایز ۴x۴ و ۵x۵)
+        static #PUZZLES = [
+          { // پازل ۴x۴ ساده
+            name: 'شروع ۴x۴',
+            size: 4,
+            fixed: [
+              [2,0,0,0],
+              [0,0,3,0],
+              [0,4,0,0],
+              [0,0,0,1]
+            ],
+            hConstraints: [ // افقی: بین سلول‌های [row][col] و [row][col+1]
+              ['<', null, '>'],
+              [null, '<', null],
+              ['>', null, '<'],
+              [null, '>', null]
+            ],
+            vConstraints: [ // عمودی: بین [row][col] و [row+1][col]
+              [null, '^', null, null],
+              ['v', null, '^', null],
+              [null, 'v', null, '^']
+            ]
+          },
+          { // پازل ۵x۵ چالشی
+            name: 'چالش ۵x۵',
+            size: 5,
+            fixed: [
+              [0,0,4,0,0],
+              [0,2,0,0,0],
+              [0,0,0,5,0],
+              [0,0,0,0,3],
+              [1,0,0,0,0]
+            ],
+            hConstraints: [
+              ['<', '>', null, '<'],
+              [null, '<', '>', null],
+              ['>', null, '<', '>'],
+              [null, '>', null, '<'],
+              ['<', null, '>', null]
+            ],
+            vConstraints: [
+              ['^', null, 'v', null, '^'],
+              [null, '^', null, 'v', null],
+              ['v', null, '^', null, '>'],
+              [null, 'v', null, '^', null]
+            ]
+          }
+        ];
+
+        // وضعیت داخلی
+        #container;           // عنصر DOM
+        #size = 4;
+        #fixedGrid = [];      // مقادیر ثابت (اعداد > 0)
+        #userGrid = [];       // مقادیر وارد شده توسط کاربر
+        #hCons = [];          // محدودیت‌های افقی (null, '<', '>')
+        #vCons = [];          // محدودیت‌های عمودی (null, '^', 'v')
+        #score = 0;
+        #currentPuzzleIndex = 0;
+        #gameWon = false;
+        #boardElement;
+        #statusElement;
+        #scoreElement;
+        #guideVisible = true;
+
+        constructor(containerId) {
+          this.#container = document.getElementById(containerId);
+          if (!this.#container) {
+            console.error(`کانتینر با id="${containerId}" یافت نشد.`);
+            return;
+          }
+          this.#loadScore();
+          this.#renderUI();
+          this.#loadPuzzle(0);
+          this.#attachEvents();
+          this.#autoSave();
+        }
+
+        // ----- متدهای خصوصی -----
+        #renderUI() {
+          this.#container.innerHTML = `
+            <div class="game-header">
+              <div class="score-box">🏆 امتیاز: <span id="futoshiki-score">0</span></div>
+              <div class="controls">
+                <button class="btn" id="new-game-btn">🔄 جدید</button>
+                <button class="btn" id="save-game-btn">💾 ذخیره</button>
+                <button class="btn" id="load-game-btn">📂 بارگذاری</button>
+                <button class="btn primary" id="check-btn">✅ بررسی</button>
+              </div>
+            </div>
+            <div class="puzzle-selector">
+              <button class="btn" id="prev-puzzle-btn">◀ پازل قبلی</button>
+              <span style="margin:0 8px; font-weight:500;" id="puzzle-name">شروع ۴x۴</span>
+              <button class="btn" id="next-puzzle-btn">پازل بعدی ▶</button>
+            </div>
+            <div class="guide-section">
+              <button class="guide-toggle" id="guide-toggle-btn">
+                <span>📘 راهنمای بازی فوتوشیکی</span>
+                <span id="guide-arrow">▼</span>
+              </button>
+              <div class="guide-content show" id="guide-content">
+                <strong>قوانین:</strong>
+                <ul>
+                  <li>🔢 اعداد ۱ تا ${this.#size} را در هر سطر و ستون بدون تکرار قرار دهید.</li>
+                  <li>🔽 علائم نابرابری (< > ^ v) رابطه بین دو خانه را نشان می‌دهند.
+                    <ul style="margin-top:4px;">
+                      <li><code>&lt;</code> : عدد سمت چپ کوچکتر از راست</li>
+                      <li><code>&gt;</code> : عدد سمت چپ بزرگتر از راست</li>
+                      <li><code>^</code> : عدد بالا کوچکتر از پایین</li>
+                      <li><code>v</code> : عدد بالا بزرگتر از پایین</li>
+                    </ul>
+                  </li>
+                  <li>✏️ خانه‌های خاکستری ثابت و غیرقابل تغییرند.</li>
+                  <li>🎯 با پر کردن همه خانه‌ها بدون خطا، برنده می‌شوید و امتیاز می‌گیرید.</li>
+                </ul>
+                <small>💡 کلیک روی خانه و وارد کردن عدد، یا استفاده از دکمه‌های +/− (در موبایل).</small>
+              </div>
+            </div>
+            <div class="futoshiki-board" id="futoshiki-board"></div>
+            <div class="status-message" id="status-message"></div>
+          `;
+          this.#boardElement = this.#container.querySelector('#futoshiki-board');
+          this.#statusElement = this.#container.querySelector('#status-message');
+          this.#scoreElement = this.#container.querySelector('#futoshiki-score');
+          this.#updateScoreDisplay();
+        }
+
+        #loadPuzzle(index) {
+          const puzzle = FutoshikiGame.#PUZZLES[index];
+          this.#size = puzzle.size;
+          this.#fixedGrid = puzzle.fixed.map(row => [...row]);
+          this.#hCons = puzzle.hConstraints.map(row => [...row]);
+          this.#vCons = puzzle.vConstraints.map(row => [...row]);
+          
+          // مقداردهی userGrid از fixedGrid (خانه‌های خالی 0)
+          this.#userGrid = this.#fixedGrid.map(row => row.map(val => val === 0 ? 0 : val));
+          this.#currentPuzzleIndex = index;
+          this.#gameWon = false;
+          
+          this.#container.querySelector('#puzzle-name').textContent = puzzle.name;
+          // به‌روزرسانی متن راهنما با سایز جدید
+          this.#container.querySelector('.guide-content strong').nextSibling.textContent = ` اعداد ۱ تا ${this.#size} را در هر سطر و ستون بدون تکرار قرار دهید.`;
+          
+          this.#renderBoard();
+          this.#clearStatus();
+        }
+
+        #renderBoard() {
+          const N = this.#size;
+          const totalCols = 2 * N - 1; // N سلول + N-1 فضای نماد
+          const totalRows = 2 * N - 1;
+          
+          this.#boardElement.style.gridTemplateColumns = `repeat(${totalCols}, auto)`;
+          this.#boardElement.style.gridTemplateRows = `repeat(${totalRows}, auto)`;
+          this.#boardElement.innerHTML = '';
+          
+          for (let r = 0; r < totalRows; r++) {
+            for (let c = 0; c < totalCols; c++) {
+              const isCellRow = r % 2 === 0;
+              const isCellCol = c % 2 === 0;
+              
+              if (isCellRow && isCellCol) {
+                // موقعیت سلول
+                const gridRow = r / 2;
+                const gridCol = c / 2;
+                const cellValue = this.#userGrid[gridRow][gridCol];
+                const isFixed = this.#fixedGrid[gridRow][gridCol] !== 0;
+                
+                const cellDiv = document.createElement('div');
+                cellDiv.className = `cell ${isFixed ? 'fixed' : ''}`;
+                cellDiv.dataset.row = gridRow;
+                cellDiv.dataset.col = gridCol;
+                
+                if (isFixed) {
+                  cellDiv.textContent = cellValue;
+                } else {
+                  const input = document.createElement('input');
+                  input.type = 'number';
+                  input.min = 1;
+                  input.max = N;
+                  input.step = 1;
+                  input.value = cellValue === 0 ? '' : cellValue;
+                  input.className = 'cell-input';
+                  input.dataset.row = gridRow;
+                  input.dataset.col = gridCol;
+                  input.inputMode = 'numeric';
+                  
+                  input.addEventListener('change', (e) => this.#handleCellChange(e));
+                  input.addEventListener('focus', (e) => e.target.select());
+                  input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') e.target.blur();
+                  });
+                  
+                  cellDiv.appendChild(input);
+                }
+                this.#boardElement.appendChild(cellDiv);
+              } 
+              else if (isCellRow && !isCellCol) {
+                // نماد افقی بین ستون‌ها
+                const rowIdx = r / 2;
+                const colIdx = (c - 1) / 2;
+                const symbol = this.#hCons[rowIdx]?.[colIdx] || '';
+                const symbolDiv = document.createElement('div');
+                symbolDiv.className = 'constraint-symbol';
+                symbolDiv.textContent = symbol === '<' ? '‹' : (symbol === '>' ? '›' : '');
+                if (symbol) {
+                  symbolDiv.style.fontSize = '2.2rem';
+                  symbolDiv.style.fontWeight = '300';
+                }
+                this.#boardElement.appendChild(symbolDiv);
+              }
+              else if (!isCellRow && isCellCol) {
+                // نماد عمودی بین سطرها
+                const rowIdx = (r - 1) / 2;
+                const colIdx = c / 2;
+                const symbol = this.#vCons[rowIdx]?.[colIdx] || '';
+                const symbolDiv = document.createElement('div');
+                symbolDiv.className = 'constraint-symbol';
+                symbolDiv.textContent = symbol === '^' ? '▲' : (symbol === 'v' ? '▼' : '');
+                if (symbol) {
+                  symbolDiv.style.fontSize = '1.8rem';
+                }
+                this.#boardElement.appendChild(symbolDiv);
+              }
+              else {
+                // تقاطع خالی
+                const emptyDiv = document.createElement('div');
+                emptyDiv.style.width = '10px';
+                emptyDiv.style.height = '10px';
+                this.#boardElement.appendChild(emptyDiv);
+              }
+            }
+          }
+          this.#validateAndMark();
+        }
+
+        #handleCellChange(event) {
+          const input = event.target;
+          const row = parseInt(input.dataset.row);
+          const col = parseInt(input.dataset.col);
+          let newValue = input.value.trim() === '' ? 0 : parseInt(input.value, 10);
+          
+          if (isNaN(newValue)) newValue = 0;
+          if (newValue < 0 || newValue > this.#size) newValue = 0;
+          
+          this.#userGrid[row][col] = newValue;
+          input.value = newValue === 0 ? '' : newValue;
+          
+          this.#validateAndMark();
+          this.#checkWinCondition();
+          this.#autoSave();
+        }
+
+        #validateAndMark() {
+          // حذف کلاس‌های خطا
+          this.#boardElement.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
+          
+          const N = this.#size;
+          const errors = new Set(); // مجموعه "row,col" برای سلول‌های خطادار
+          
+          // ۱. بررسی تکرار در سطرها
+          for (let r = 0; r < N; r++) {
+            const seen = new Map();
+            for (let c = 0; c < N; c++) {
+              const val = this.#userGrid[r][c];
+              if (val !== 0) {
+                if (seen.has(val)) {
+                  errors.add(`${r},${c}`);
+                  errors.add(`${r},${seen.get(val)}`);
+                } else {
+                  seen.set(val, c);
+                }
+              }
+            }
+          }
+          
+          // ۲. بررسی تکرار در ستون‌ها
+          for (let c = 0; c < N; c++) {
+            const seen = new Map();
+            for (let r = 0; r < N; r++) {
+              const val = this.#userGrid[r][c];
+              if (val !== 0) {
+                if (seen.has(val)) {
+                  errors.add(`${r},${c}`);
+                  errors.add(`${seen.get(val)},${c}`);
+                } else {
+                  seen.set(val, r);
+                }
+              }
+            }
+          }
+          
+          // ۳. بررسی محدودیت‌های نابرابری افقی
+          for (let r = 0; r < N; r++) {
+            for (let c = 0; c < N-1; c++) {
+              const sym = this.#hCons[r][c];
+              if (!sym) continue;
+              const left = this.#userGrid[r][c];
+              const right = this.#userGrid[r][c+1];
+              if (left === 0 || right === 0) continue;
+              
+              if (sym === '<' && left >= right) {
+                errors.add(`${r},${c}`);
+                errors.add(`${r},${c+1}`);
+              } else if (sym === '>' && left <= right) {
+                errors.add(`${r},${c}`);
+                errors.add(`${r},${c+1}`);
+              }
+            }
+          }
+          
+          // ۴. بررسی محدودیت‌های عمودی
+          for (let r = 0; r < N-1; r++) {
+            for (let c = 0; c < N; c++) {
+              const sym = this.#vCons[r][c];
+              if (!sym) continue;
+              const top = this.#userGrid[r][c];
+              const bottom = this.#userGrid[r+1][c];
+              if (top === 0 || bottom === 0) continue;
+              
+              if (sym === '^' && top >= bottom) {
+                errors.add(`${r},${c}`);
+                errors.add(`${r+1},${c}`);
+              } else if (sym === 'v' && top <= bottom) {
+                errors.add(`${r},${c}`);
+                errors.add(`${r+1},${c}`);
+              }
+            }
+          }
+          
+          // اعمال کلاس خطا
+          errors.forEach(key => {
+            const [rr, cc] = key.split(',').map(Number);
+            const cell = this.#boardElement.querySelector(`.cell[data-row="${rr}"][data-col="${cc}"]`);
+            if (cell) cell.classList.add('error');
+          });
+        }
+
+        #checkWinCondition() {
+          const N = this.#size;
+          // همه خانه‌ها پر شده؟
+          for (let r = 0; r < N; r++) {
+            for (let c = 0; c < N; c++) {
+              if (this.#userGrid[r][c] === 0) return false;
+            }
+          }
+          // خطایی وجود دارد؟
+          const hasError = this.#boardElement.querySelector('.cell.error') !== null;
+          if (hasError) return false;
+          
+          if (!this.#gameWon) {
+            this.#gameWon = true;
+            this.#score += 10;
+            this.#saveScore();
+            this.#updateScoreDisplay();
+            this.#statusElement.innerHTML = '<span class="win-message">🎉 تبریک! پازل را حل کردید! +۱۰ امتیاز 🎉</span>';
+          }
+          return true;
+        }
+
+        #clearStatus() {
+          this.#statusElement.innerHTML = '';
+        }
+
+        #updateScoreDisplay() {
+          if (this.#scoreElement) this.#scoreElement.textContent = this.#score;
+        }
+
+        #loadScore() {
+          try {
+            const saved = localStorage.getItem('futoshiki_score');
+            if (saved) this.#score = parseInt(saved, 10) || 0;
+          } catch(e) { /* بی‌خیال */ }
+        }
+
+        #saveScore() {
+          try {
+            localStorage.setItem('futoshiki_score', this.#score);
+          } catch(e) {}
+        }
+
+        #autoSave() {
+          const gameState = {
+            size: this.#size,
+            fixedGrid: this.#fixedGrid,
+            userGrid: this.#userGrid,
+            hCons: this.#hCons,
+            vCons: this.#vCons,
+            puzzleIndex: this.#currentPuzzleIndex
+          };
+          try {
+            localStorage.setItem('futoshiki_autosave', JSON.stringify(gameState));
+          } catch(e) {}
+        }
+
+        #saveGame() {
+          this.#autoSave();
+          this.#statusElement.innerHTML = '✅ بازی ذخیره شد.';
+          setTimeout(() => this.#clearStatus(), 2000);
+        }
+
+        #loadGame() {
+          try {
+            const saved = localStorage.getItem('futoshiki_autosave');
+            if (!saved) {
+              this.#statusElement.innerHTML = '⚠️ ذخیره‌ای یافت نشد.';
+              return;
+            }
+            const state = JSON.parse(saved);
+            this.#size = state.size;
+            this.#fixedGrid = state.fixedGrid;
+            this.#userGrid = state.userGrid;
+            this.#hCons = state.hCons;
+            this.#vCons = state.vCons;
+            this.#currentPuzzleIndex = state.puzzleIndex;
+            this.#gameWon = false;
+            
+            this.#container.querySelector('#puzzle-name').textContent = FutoshikiGame.#PUZZLES[this.#currentPuzzleIndex].name;
+            this.#renderBoard();
+            this.#clearStatus();
+            this.#statusElement.innerHTML = '📂 بازی بارگذاری شد.';
+            setTimeout(() => this.#clearStatus(), 1500);
+            this.#validateAndMark();
+            this.#checkWinCondition();
+          } catch(e) {
+            this.#statusElement.innerHTML = '❌ خطا در بارگذاری.';
+          }
+        }
+
+        #attachEvents() {
+          this.#container.querySelector('#new-game-btn').addEventListener('click', () => {
+            this.#loadPuzzle(this.#currentPuzzleIndex);
+            this.#autoSave();
+          });
+          
+          this.#container.querySelector('#save-game-btn').addEventListener('click', () => this.#saveGame());
+          this.#container.querySelector('#load-game-btn').addEventListener('click', () => this.#loadGame());
+          
+          this.#container.querySelector('#check-btn').addEventListener('click', () => {
+            this.#validateAndMark();
+            if (this.#checkWinCondition()) {
+              // پیام در متد نمایش داده می‌شود
+            } else {
+              const errCount = this.#boardElement.querySelectorAll('.cell.error').length;
+              this.#statusElement.innerHTML = errCount ? `⚠️ ${errCount} خطا وجود دارد.` : '👀 هنوز کامل نشده یا خطایی نیست.';
+            }
+          });
+          
+          this.#container.querySelector('#prev-puzzle-btn').addEventListener('click', () => {
+            let newIdx = this.#currentPuzzleIndex - 1;
+            if (newIdx < 0) newIdx = FutoshikiGame.#PUZZLES.length - 1;
+            this.#loadPuzzle(newIdx);
+            this.#autoSave();
+          });
+          
+          this.#container.querySelector('#next-puzzle-btn').addEventListener('click', () => {
+            let newIdx = (this.#currentPuzzleIndex + 1) % FutoshikiGame.#PUZZLES.length;
+            this.#loadPuzzle(newIdx);
+            this.#autoSave();
+          });
+          
+          // راهنما
+          const toggleBtn = this.#container.querySelector('#guide-toggle-btn');
+          const guideDiv = this.#container.querySelector('#guide-content');
+          const arrow = this.#container.querySelector('#guide-arrow');
+          toggleBtn.addEventListener('click', () => {
+            guideDiv.classList.toggle('show');
+            arrow.textContent = guideDiv.classList.contains('show') ? '▼' : '▶';
+          });
+        }
+
+        // متد عمومی برای مقداردهی مجدد (اختیاری)
+        reset() {
+          this.#loadPuzzle(this.#currentPuzzleIndex);
+        }
+      }
+
+      // ----- راه‌اندازی بازی وقتی DOM آماده است -----
+      window.addEventListener('DOMContentLoaded', () => {
+        // بازی در div با id="futoshiki-game" قرار می‌گیرد
+        new FutoshikiGame('futoshiki-game');
+      });
+
+      // در صورت نیاز به استفاده مجدد: شیء بازی در window ذخیره می‌شود
+      window.FutoshikiGame = FutoshikiGame;
+    })();
+  </script>
+</body>
+</html>

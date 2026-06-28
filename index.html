@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- سئو و کلمات کلیدی -->
+  <title>مجموعه بازی‌های فکری ژاپنی | معمای منطقی و پازل</title>
+  <meta name="description" content="گنجینه‌ای از بازی‌های فکری ژاپنی: اسلیترلینک، مازایو، نوریکابه، شیکاکو، کن‌کن، فوتوشیکی، نونوگرام، فیلومینو، هاشی، هیتوری، کِکورو، سوکوژن، کیسلر، گوکیگن و بیشتر. کاملاً رایگان و تحت وب.">
+  <meta name="keywords" content="بازی فکری ژاپنی, پازل ژاپنی, اسلیترلینک, مازایو, نوریکابه, شیکاکو, کن کن, فوتوشیکی, نونوگرام, هانجی, فیلومینو, هاشی, هیتوری, ککورو, سوکوژن, کیسلر, گوکیگن, معمای منطقی, بازی آنلاین">
+  <meta name="author" content="اینتل‌سافت">
+  <meta name="theme-color" content="#1e3c72">
+  <link rel="canonical" href="https://intellsoft.ir/games/japanese-puzzles/">
+  <!-- فونت وزیرمتن -->
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+  <style>
+    /* === استانداردهای ۲۰۲۶: متغیرهای CSS، طراحی واکنش‌گرا و مینیمال === */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-gradient: linear-gradient(145deg, #f4f2ef 0%, #e8e3db 100%);
+      --surface: rgba(255, 255, 255, 0.75);
+      --primary: #1e3c72;
+      --primary-light: #2a5298;
+      --accent: #b76e2e;
+      --text-dark: #1e293b;
+      --text-soft: #334155;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --border-light: #e2e8f0;
+      --shadow-sm: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02);
+      --shadow-hover: 0 20px 30px -10px rgba(0,0,0,0.1), 0 8px 15px -6px rgba(0,0,0,0.05);
+      --radius-card: 24px;
+      --radius-btn: 60px;
+      --font-main: 'Vazirmatn', 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      font-family: var(--font-main);
+      color: var(--text-dark);
+      line-height: 1.6;
+      padding: 20px 16px;
+      min-height: 100vh;
+      backdrop-filter: blur(2px);
+    }
+
+    .page-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* === هدر === */
+    .main-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 8vw, 3.5rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 80%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 10px rgba(30,60,114,0.1);
+    }
+
+    .subhead {
+      font-size: 1.2rem;
+      color: var(--text-soft);
+      max-width: 750px;
+      margin: 0 auto 1.5rem;
+      font-weight: 400;
+      backdrop-filter: blur(4px);
+      padding: 0.5rem 1.5rem;
+      border-radius: 60px;
+      background: var(--surface);
+      display: inline-block;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* === راهنمای کلی === */
+    .global-guide {
+      background: var(--surface);
+      backdrop-filter: blur(8px);
+      border-radius: 40px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(255,255,255,0.5);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .guide-text {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .guide-icon {
+      background: var(--primary);
+      color: white;
+      width: 48px;
+      height: 48px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+    }
+
+    .guide-desc {
+      font-size: 1rem;
+      color: var(--text-dark);
+    }
+
+    .guide-desc strong {
+      color: var(--primary);
+    }
+
+    .keyword-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .keyword-tag {
+      background: #e9e1d6;
+      color: #2c3e50;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: all 0.1s;
+      text-decoration: none;
+      border: 1px solid transparent;
+    }
+
+    .keyword-tag:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary-light);
+    }
+
+    /* === گرید بازی‌ها === */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 24px;
+      margin-bottom: 3rem;
+    }
+
+    .game-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius-card);
+      padding: 1.8rem 1.2rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, box-shadow 0.3s;
+      border: 1px solid rgba(255,255,255,0.6);
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-hover);
+      background: rgba(255, 255, 255, 0.95);
+      border-color: var(--accent);
+    }
+
+    .card-icon {
+      font-size: 3.2rem;
+      line-height: 1;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .game-title {
+      font-size: 1.7rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .game-title small {
+      font-size: 0.8rem;
+      background: #e9e1d6;
+      padding: 2px 10px;
+      border-radius: 30px;
+      color: #4a3729;
+      font-weight: 400;
+    }
+
+    .game-desc {
+      color: var(--text-soft);
+      font-size: 0.9rem;
+      margin: 0.5rem 0 1.2rem;
+      flex: 1;
+    }
+
+    .play-badge {
+      align-self: flex-start;
+      background: var(--primary);
+      color: white;
+      padding: 8px 18px;
+      border-radius: var(--radius-btn);
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      margin-top: auto;
+    }
+
+    .game-card:hover .play-badge {
+      background: var(--accent);
+    }
+
+    /* === فوتر === */
+    .footer {
+      margin-top: 2rem;
+      padding: 2rem 1rem 1rem;
+      text-align: center;
+      border-top: 1px solid rgba(0,0,0,0.05);
+      color: var(--text-soft);
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .footer a:hover {
+      border-bottom-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .developer-credit {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .seo-note {
+      margin-top: 0.8rem;
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    /* === ریسپانسیو === */
+    @media (max-width: 640px) {
+      body { padding: 12px 8px; }
+      .global-guide { padding: 1.2rem 1.5rem; }
+      .game-card { padding: 1.5rem 1rem; }
+      .game-title { font-size: 1.4rem; }
+    }
+
+    /* لود فونت جایگزین */
+    @supports (font-variation-settings: normal) {
+      body { font-family: 'Vazirmatn', sans-serif; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+  
+  <!-- هدر -->
+  <header class="main-header">
+    <h1>🎌 مجموعه بازی‌های فکری ژاپنی</h1>
+    <div class="subhead">پازل‌های منطقی، معمایی و سرگرم‌کننده</div>
+  </header>
+
+  <!-- راهنمای سریع + کلمات کلیدی سئو -->
+  <section class="global-guide">
+    <div class="guide-text">
+      <span class="guide-icon">📘</span>
+      <div class="guide-desc">
+        <strong>راهنمای فارسی:</strong> هر بازی را با کلیک روی کارت آن باز کنید. قوانین هر بازی درون صفحهٔ خودش توضیح داده شده. <br>
+        <span style="font-size:0.9rem;">بازی‌ها به‌طور خودکار در مرورگر ذخیره می‌شوند. مناسب موبایل و دسکتاپ.</span>
+      </div>
+    </div>
+    <div class="keyword-cloud">
+      <span class="keyword-tag">#معمای_ژاپنی</span>
+      <span class="keyword-tag">#پازل_منطقی</span>
+      <span class="keyword-tag">#نونوگرام</span>
+      <span class="keyword-tag">#کاکورو</span>
+      <span class="keyword-tag">#اسلیترلینک</span>
+      <span class="keyword-tag">#هیتوری</span>
+      <span class="keyword-tag">#فوتوشیکی</span>
+      <span class="keyword-tag">#بازی_فکری</span>
+    </div>
+  </section>
+
+  <!-- گرید بازی‌ها (لیست کامل) -->
+  <div class="games-grid" id="gamesGrid">
+    <!-- کارت‌ها به صورت استاتیک؛ لینک به فایل‌های html -->
+    <a href="بازی ژاپنی اسلیترلینک.html" class="game-card">
+      <div class="card-icon">🔗</div>
+      <div class="game-title">اسلیترلینک <small>Slitherlink</small></div>
+      <div class="game-desc">حلقه بسته با اعداد گوشه‌ها. خطوط را طوری رسم کن که عدد هر خانه تعداد خطوط اطرافش باشد.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی ژاپنی مازایو.html" class="game-card">
+      <div class="card-icon">⚪⚫</div>
+      <div class="game-title">مازایو <small>Masyu</small></div>
+      <div class="game-desc">حلقه‌ای که از مرواریدهای سیاه و سفید عبور می‌کند. قوانین چرخش و مسیر مستقیم.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی ژاپنی نوریکابه.html" class="game-card">
+      <div class="card-icon">🧱🏝️</div>
+      <div class="game-title">نوریکابه <small>Nurikabe</small></div>
+      <div class="game-desc">جزیره‌های سفید را با دیوار سیاه جدا کن. هر عدد اندازه جزیره را مشخص می‌کند.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی فکری شیکاکو.html" class="game-card">
+      <div class="card-icon">📐🧩</div>
+      <div class="game-title">شیکاکو <small>Shikaku</small></div>
+      <div class="game-desc">صفحه را با مستطیل‌هایی بپوشان که مساحت هر کدام برابر عدد داخل آن باشد.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی فکری ژاپنی کن کن.html" class="game-card">
+      <div class="card-icon">🧮➕➖</div>
+      <div class="game-title">کن‌کن <small>KenKen</small></div>
+      <div class="game-desc">جدول اعداد با عملیات ریاضی. هر ناحیه باید به عدد هدف با عملگر مشخص برسد.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی فکری فوتوشیکی.html" class="game-card">
+      <div class="card-icon">🔽🔼</div>
+      <div class="game-title">فوتوشیکی <small>Futoshiki</small></div>
+      <div class="game-desc">اعداد ۱ تا N را با رعایت نامساوی‌ها (<>^v) در جدول جای دهید.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی هانجی (نونوگرام) ژاپنی.html" class="game-card">
+      <div class="card-icon">🎨📊</div>
+      <div class="game-title">هانجی / نونوگرام <small>Nonogram</small></div>
+      <div class="game-desc">با استفاده از اعداد راهنما، تصویر مخفی را رنگ‌آمیزی کن. (نسخه هانجی)</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی موزاییک ژاپنی.html" class="game-card">
+      <div class="card-icon">🖼️🧩</div>
+      <div class="game-title">موزاییک ژاپنی <small>Mosaic</small></div>
+      <div class="game-desc">نوعی نونوگرام با راهنماهای داخل جدول. تصویر را با منطق کامل کن.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="فکری ژاپنی فیلومینو.html" class="game-card">
+      <div class="card-icon">🧩🔢</div>
+      <div class="game-title">فیلومینو <small>Filomino</small></div>
+      <div class="game-desc">صفحه را به چندضلعی‌های هم‌مساحت با عدد داخل تقسیم کن. نواحی مجاور هم‌اندازه ممنوع.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="فکری ژاپنی هاشی.html" class="game-card">
+      <div class="card-icon">🌉🔗</div>
+      <div class="game-title">هاشی <small>Hashi / Bridges</small></div>
+      <div class="game-desc">جزایر را با پل (۱ یا ۲ خط) به هم وصل کن. تعداد پل‌های هر جزیره مشخص است.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="فکری ژاپنی هیتوری.html" class="game-card">
+      <div class="card-icon">🔲✖️</div>
+      <div class="game-title">هیتوری <small>Hitori</small></div>
+      <div class="game-desc">با سیاه کردن برخی خانه‌ها، تکراری در سطر و ستون باقی نماند و سفیدها پیوسته باشند.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی فکری ژاپنی کِکورو.html" class="game-card">
+      <div class="card-icon">🧮🔣</div>
+      <div class="game-title">کِکورو <small>Kakuro</small></div>
+      <div class="game-desc">جمع اعداد در هر بلوک افقی/عمودی باید برابر عدد سرنخ باشد (بدون تکرار).</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی سوکوژن.html" class="game-card">
+      <div class="card-icon">📦👤⭐</div>
+      <div class="game-title">سوکوژن <small>Sokojun</small></div>
+      <div class="game-desc">بازیکن جعبه‌ها را به نقاط هدف هل می‌دهد. (سبک سوکوبان ژاپنی)</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی فکری ژاپنی کیسلر.html" class="game-card">
+      <div class="card-icon">⚡🎯</div>
+      <div class="game-title">کیسلر <small>Kaisler</small></div>
+      <div class="game-desc">جمع اعداد هر سطر/ستون باید با اعداد راهنما برابر شود. (شبیه کاکورو ساده‌تر)</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <a href="بازی فکری ژاپنی به نام گوکیگن نانامه.html" class="game-card">
+      <div class="card-icon">⤢⤡</div>
+      <div class="game-title">گوکیگن <small>Gokigen</small></div>
+      <div class="game-desc">خطوط مورب ( / یا \ ) رسم کن تا تعداد خطوط متصل به هر رأس با عددش برابر شود.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+    <!-- فایل اضافی شیکاکو دیگر (در صورت تمایل) -->
+    <a href="بازی ژاپنی شیکاکو.html" class="game-card" style="opacity:0.9;">
+      <div class="card-icon">📏🧮</div>
+      <div class="game-title">شیکاکو ۲ <small>Shikaku v2</small></div>
+      <div class="game-desc">نسخه دیگری از معمای مستطیل‌ها. مساحت برابر با عدد داخل مستطیل.</div>
+      <span class="play-badge">🎮 امتحان کن ←</span>
+    </a>
+    <!-- نونوگرام اصلی دیگر -->
+    <a href="بازی فکری نونوگرام.html" class="game-card" style="opacity:0.9;">
+      <div class="card-icon">🎯📋</div>
+      <div class="game-title">نانوگرام <small>Nonogram classic</small></div>
+      <div class="game-desc">پازل تصویری با اعداد ردیف و ستون. تصویر X شکل و موارد دیگر.</div>
+      <span class="play-badge">🎮 شروع بازی ←</span>
+    </a>
+  </div>
+
+  <!-- فوتر با لینک به اینتل‌سافت -->
+  <footer class="footer">
+    <div class="developer-credit">
+      <span>⚡ طراحی و توسعه توسط</span> 
+      <a href="https://intellsoft.ir/" target="_blank" rel="noopener noreferrer">اینتل‌سافت | IntellSoft</a> 
+      <span>— نرم‌افزارهای هوشمند و بازی‌های فکری</span>
+    </div>
+    <div class="seo-note">
+      <span>🎌 مجموعه کامل بازی‌های فکری ژاپنی: اسلیترلینک، مازایو، نوریکابه، شیکاکو، کن‌کن، فوتوشیکی، هانجی، فیلومینو، هاشی، هیتوری، کِکورو و ... </span><br>
+      <span>© ۲۰۲۶ | تمامی حقوق برای علاقه‌مندان به پازل محفوظ است. اجرا در مرورگر، بدون نیاز به نصب.</span>
+    </div>
+  </footer>
+</div>
+
+<!-- اسکریپت کوچک برای بهبود تجربه (اختیاری) -->
+<script>
+  (function(){
+    // می‌توان analytics ساده یا هیچ. فقط console خوش‌آمد
+    console.log('🎋 به مجموعه بازی‌های فکری ژاپنی خوش آمدید! | IntellSoft.ir');
+    // اگر کاربر روی کارت کلیک کرد (لینک ها کار می‌کنند) 
+  })();
+</script>
+</body>
+</html>

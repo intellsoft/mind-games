@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>مازایو (Masyu) – بازی فکری ژاپنی</title>
+  <style>
+    /* 2026 Standards: modern CSS, custom properties, responsive grid, dark/light adaptive */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --primary: #1e3a8a;
+      --primary-light: #3b82f6;
+      --accent: #b45309;
+      --text: #0f172a;
+      --text-soft: #334155;
+      --border: #cbd5e1;
+      --grid-line: #94a3b8;
+      --white-circle: #f8fafc;
+      --black-circle: #0f172a;
+      --line-color: #2563eb;
+      --success: #059669;
+      --error: #dc2626;
+      --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02);
+      --radius-card: 24px;
+      --radius-control: 40px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: 'Vazirmatn', 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+    }
+
+    /* container for embedding – the game will be rendered inside #masyu-game */
+    #masyu-game {
+      width: 100%;
+      max-width: 750px;
+      margin: 0 auto;
+    }
+
+    .game-container {
+      background: var(--surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      padding: 1.5rem 1.2rem;
+      backdrop-filter: blur(2px);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    /* responsive grid system */
+    .game-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      gap: 12px;
+    }
+
+    h2 {
+      font-size: 1.7rem;
+      font-weight: 700;
+      background: linear-gradient(145deg, var(--primary), #2563eb);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.01em;
+    }
+
+    .score-panel {
+      display: flex;
+      gap: 16px;
+      background: var(--bg);
+      padding: 8px 16px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .score-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      margin: 10px 0 18px;
+      border-radius: 20px;
+      background: var(--surface);
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.02), 0 4px 8px rgba(0,0,0,0.02);
+      touch-action: none;  /* prevents scroll/pinch on canvas */
+    }
+
+    #masyuCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      cursor: crosshair;
+      touch-action: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .control-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 20px 0 18px;
+    }
+
+    .btn {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: var(--radius-control);
+      font-size: 1rem;
+      font-weight: 500;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      backdrop-filter: blur(4px);
+      touch-action: manipulation;
+      min-width: 90px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+      box-shadow: 0 6px 12px -6px var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+      transform: scale(0.98);
+    }
+
+    .btn-outline {
+      border-color: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+    .rules-card {
+      background: #f1f5f9;
+      border-radius: 20px;
+      padding: 1.2rem 1.5rem;
+      margin-top: 15px;
+      border-right: 6px solid var(--primary);
+    }
+
+    .rules-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .rules-text {
+      color: var(--text-soft);
+      font-size: 0.95rem;
+    }
+
+    .rules-text p {
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      background: var(--primary);
+      color: white;
+      padding: 2px 10px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+    }
+
+    .message {
+      min-height: 30px;
+      font-weight: 500;
+      color: var(--success);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* mobile fine-tune */
+    @media (max-width: 480px) {
+      .game-container {
+        padding: 1rem 0.8rem;
+      }
+      .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        min-width: 70px;
+      }
+      .score-panel {
+        padding: 4px 12px;
+        font-size: 0.85rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+      }
+    }
+
+    /* embed-friendly: canvas adapts */
+    .timer-value {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+  <!-- include Vazirmatn for Persian (optional, fallback to system fonts) -->
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<!-- The game will be injected exactly inside this div -->
+<div id="masyu-game"></div>
+
+<script>
+  (function(){
+    "use strict";
+
+    // ----- 2026 standards: ES6+, modules pattern, clean architecture -----
+    const CONFIG = {
+      rows: 6,
+      cols: 6,
+      minCellSize: 40,
+      circleRadiusFactor: 0.28,
+      lineWidthFactor: 0.045,
+      edgeHitThreshold: 18, // pixels
+      storageKey: 'masyu_save_v1',
+      scoreKey: 'masyu_score_v1'
+    };
+
+    // ---------- معیارهای پازل مازایو (Masyu) ----------
+    // تخته ۶×۶ با دایره‌های مشخص (پازل قابل حل)
+    const PUZZLE_CIRCLES = [
+      { row: 1, col: 2, type: 'black' },  // مشکی
+      { row: 2, col: 1, type: 'white' },  // سفید
+      { row: 2, col: 4, type: 'white' },  // سفید
+      { row: 3, col: 3, type: 'black' },  // مشکی
+      { row: 4, col: 2, type: 'white' }   // سفید
+    ];
+
+    // ---------- کلاس اصلی بازی ----------
+    class MasyuGame {
+      constructor(containerElement) {
+        this.container = containerElement;
+        this.rows = CONFIG.rows;
+        this.cols = CONFIG.cols;
+        
+        // وضعیت خطوط (false = بدون خط)
+        this.hEdges = Array(this.rows).fill().map(() => Array(this.cols - 1).fill(false));
+        this.vEdges = Array(this.rows - 1).fill().map(() => Array(this.cols).fill(false));
+        
+        // دایره‌ها
+        this.circles = PUZZLE_CIRCLES.map(c => ({ ...c }));
+        
+        // امتیاز و زمان
+        this.solvedCount = 0;           // تعداد دفعات حل کامل
+        this.bestTime = null;           // بهترین زمان (ثانیه)
+        this.currentTimer = 0;
+        this.timerInterval = null;
+        this.isTimerRunning = false;
+        this.puzzleCompleted = false;   // آیا پازل فعلی حل شده (جلوگیری از امتیاز تکراری)
+        
+        // UI elements
+        this.canvas = null;
+        this.ctx = null;
+        this.messageDiv = null;
+        this.scoreDisplay = null;
+        this.timerDisplay = null;
+        this.bestDisplay = null;
+        
+        this.initUI();
+        this.loadFromStorage();
+        this.startTimer();
+        this.attachEvents();
+        this.render();
+      }
+      
+      initUI() {
+        this.container.innerHTML = '';
+        this.container.classList.add('game-container');
+        
+        // ساختار HTML
+        const header = document.createElement('div');
+        header.className = 'game-header';
+        header.innerHTML = `
+          <h2>🌀 مازایو Masyu</h2>
+          <div class="score-panel">
+            <div class="score-item">🏆 <span id="masyuSolvedCount">0</span></div>
+            <div class="score-item">⏱️ <span id="masyuTimer" class="timer-value">00:00</span></div>
+            <div class="score-item">⭐ <span id="masyuBestTime">--:--</span></div>
+          </div>
+        `;
+        
+        const canvasWrapper = document.createElement('div');
+        canvasWrapper.className = 'canvas-wrapper';
+        this.canvas = document.createElement('canvas');
+        this.canvas.id = 'masyuCanvas';
+        canvasWrapper.appendChild(this.canvas);
+        
+        const controls = document.createElement('div');
+        controls.className = 'control-bar';
+        controls.innerHTML = `
+          <button class="btn btn-outline" id="masyuClearBtn">🧹 پاک‌کردن</button>
+          <button class="btn btn-outline" id="masyuResetBtn">🔄 از نو</button>
+          <button class="btn btn-primary" id="masyuCheckBtn">✅ بررسی</button>
+        `;
+        
+        const messageArea = document.createElement('div');
+        messageArea.className = 'message';
+        messageArea.id = 'masyuMessage';
+        
+        const rules = document.createElement('div');
+        rules.className = 'rules-card';
+        rules.innerHTML = `
+          <div class="rules-title"><span class="badge">راهنما</span> قوانین مازایو</div>
+          <div class="rules-text">
+            <p><strong>⚪ دایره سفید:</strong> حلقه باید مستقیم از آن عبور کند، اما در حداقل یکی از خانه‌های مجاور (در مسیر) بپیچد.</p>
+            <p><strong>⚫ دایره سیاه:</strong> حلقه باید در آن خانه بپیچد (زاویه ۹۰ درجه) و در دو خانهٔ مجاور مسیر، مستقیم ادامه یابد.</p>
+            <p>🔗 یک حلقهٔ بستهٔ واحد رسم کنید که از تمام دایره‌ها عبور کند. خطوط فقط افقی/عمودی بین مرکز خانه‌ها.</p>
+            <p>✏️ روی خطوط کلیک/لمس کنید تا رسم یا پاک شوند. با دکمهٔ بررسی، حلقه ارزیابی می‌شود.</p>
+          </div>
+        `;
+        
+        this.container.appendChild(header);
+        this.container.appendChild(canvasWrapper);
+        this.container.appendChild(controls);
+        this.container.appendChild(messageArea);
+        this.container.appendChild(rules);
+        
+        // رفرنس‌های DOM
+        this.scoreDisplay = document.getElementById('masyuSolvedCount');
+        this.timerDisplay = document.getElementById('masyuTimer');
+        this.bestDisplay = document.getElementById('masyuBestTime');
+        this.messageDiv = document.getElementById('masyuMessage');
+        
+        this.ctx = this.canvas.getContext('2d');
+        
+        // دکمه‌ها
+        document.getElementById('masyuClearBtn').addEventListener('click', () => this.clearAllLines());
+        document.getElementById('masyuResetBtn').addEventListener('click', () => this.resetPuzzle());
+        document.getElementById('masyuCheckBtn').addEventListener('click', () => this.checkSolution());
+        
+        this.updateScoreUI();
+        this.updateBestTimeUI();
+        this.resizeCanvas();
+      }
+      
+      // تنظیم اندازه canvas بر اساس wrapper
+      resizeCanvas() {
+        const wrapper = this.canvas.parentElement;
+        const size = Math.min(wrapper.clientWidth, wrapper.clientHeight);
+        this.canvas.width = size;
+        this.canvas.height = size;
+        this.render();
+      }
+      
+      attachEvents() {
+        window.addEventListener('resize', () => {
+          this.resizeCanvas();
+        });
+        
+        // مدیریت کلیک/لمس
+        const handleInteraction = (e) => {
+          e.preventDefault();
+          if (this.puzzleCompleted) {
+            // اگر حل شده باشد، همچنان می‌توان ویرایش کرد، اما وضعیت تکمیل باطل می‌شود
+            this.puzzleCompleted = false;
+            this.messageDiv.textContent = '';
+          }
+          const rect = this.canvas.getBoundingClientRect();
+          const scaleX = this.canvas.width / rect.width;
+          const scaleY = this.canvas.height / rect.height;
+          
+          let clientX, clientY;
+          if (e.touches) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+          } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+          }
+          
+          const canvasX = (clientX - rect.left) * scaleX;
+          const canvasY = (clientY - rect.top) * scaleY;
+          
+          const edge = this.getEdgeFromPixel(canvasX, canvasY);
+          if (edge) {
+            this.toggleEdge(edge);
+            this.render();
+            this.saveToStorage();
+            this.puzzleCompleted = false; // تغییر در تخته
+            this.messageDiv.textContent = '';
+          }
+        };
+        
+        this.canvas.addEventListener('click', handleInteraction);
+        this.canvas.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          handleInteraction(e);
+        }, { passive: false });
+        this.canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+        this.canvas.addEventListener('touchend', (e) => e.preventDefault());
+      }
+      
+      // محاسبه اندازه سلول
+      getCellSize() {
+        return this.canvas.width / this.cols;
+      }
+      
+      // تشخیص لبه بر اساس مختصات
+      getEdgeFromPixel(x, y) {
+        const cell = this.getCellSize();
+        if (cell <= 0) return null;
+        const threshold = CONFIG.edgeHitThreshold;
+        
+        for (let r = 0; r < this.rows; r++) {
+          for (let c = 0; c < this.cols; c++) {
+            const left = c * cell;
+            const right = (c + 1) * cell;
+            const top = r * cell;
+            const bottom = (r + 1) * cell;
+            
+            // لبه افقی (بین r,c و r,c+1) - فقط وقتی c < cols-1
+            if (c < this.cols - 1) {
+              const edgeY = top + cell/2;
+              if (Math.abs(y - edgeY) < threshold && x > left && x < right) {
+                return { type: 'h', row: r, col: c };
+              }
+            }
+            // لبه عمودی (بین r,c و r+1,c) - فقط وقتی r < rows-1
+            if (r < this.rows - 1) {
+              const edgeX = left + cell/2;
+              if (Math.abs(x - edgeX) < threshold && y > top && y < bottom) {
+                return { type: 'v', row: r, col: c };
+              }
+            }
+          }
+        }
+        return null;
+      }
+      
+      toggleEdge(edge) {
+        if (edge.type === 'h') {
+          this.hEdges[edge.row][edge.col] = !this.hEdges[edge.row][edge.col];
+        } else {
+          this.vEdges[edge.row][edge.col] = !this.vEdges[edge.row][edge.col];
+        }
+      }
+      
+      clearAllLines() {
+        this.hEdges = Array(this.rows).fill().map(() => Array(this.cols - 1).fill(false));
+        this.vEdges = Array(this.rows - 1).fill().map(() => Array(this.cols).fill(false));
+        this.puzzleCompleted = false;
+        this.messageDiv.textContent = '';
+        this.render();
+        this.saveToStorage();
+      }
+      
+      resetPuzzle() {
+        this.clearAllLines();
+        // reset timer? optional: keep timer running.
+      }
+      
+      // ---------- اعتبارسنجی کامل مازایو ----------
+      validateSolution() {
+        const rows = this.rows, cols = this.cols;
+        const h = this.hEdges, v = this.vEdges;
+        
+        // ۱. هر دایره باید دقیقاً دو یال داشته باشد
+        for (let circ of this.circles) {
+          const { row, col } = circ;
+          let count = 0;
+          if (col > 0 && h[row][col-1]) count++;
+          if (col < cols-1 && h[row][col]) count++;
+          if (row > 0 && v[row-1][col]) count++;
+          if (row < rows-1 && v[row][col]) count++;
+          if (count !== 2) return false;
+        }
+        
+        // ۲. قوانین سفید/سیاه
+        for (let circ of this.circles) {
+          const { row, col, type } = circ;
+          const edges = [];
+          if (col > 0 && h[row][col-1]) edges.push('left');
+          if (col < cols-1 && h[row][col]) edges.push('right');
+          if (row > 0 && v[row-1][col]) edges.push('up');
+          if (row < rows-1 && v[row][col]) edges.push('down');
+          
+          if (edges.length !== 2) return false;
+          
+          const isHorizontal = edges.includes('left') && edges.includes('right');
+          const isVertical = edges.includes('up') && edges.includes('down');
+          
+          if (type === 'white') {
+            if (!(isHorizontal || isVertical)) return false; // مستقیم
+            // حداقل یک پیچ در مجاور
+            let turnFound = false;
+            if (isHorizontal) {
+              if (col > 0 && h[row][col-1]) {
+                const next = this.hasTurnAtCell(row, col-1, 'horizontal');
+                if (next) turnFound = true;
+              }
+              if (col < cols-1 && h[row][col]) {
+                const next = this.hasTurnAtCell(row, col+1, 'horizontal');
+                if (next) turnFound = true;
+              }
+            } else {
+              if (row > 0 && v[row-1][col]) {
+                const next = this.hasTurnAtCell(row-1, col, 'vertical');
+                if (next) turnFound = true;
+              }
+              if (row < rows-1 && v[row][col]) {
+                const next = this.hasTurnAtCell(row+1, col, 'vertical');
+                if (next) turnFound = true;
+              }
+            }
+            if (!turnFound) return false;
+          } else { // black
+            if (isHorizontal || isVertical) return false; // باید بپیچد
+            // در دو خانه مجاور باید مستقیم ادامه دهد
+            let straightOk = true;
+            for (let dir of edges) {
+              if (dir === 'left' && col > 0) {
+                if (!this.isStraightFromCell(row, col-1, 'left')) straightOk = false;
+              } else if (dir === 'right' && col < cols-1) {
+                if (!this.isStraightFromCell(row, col+1, 'right')) straightOk = false;
+              } else if (dir === 'up' && row > 0) {
+                if (!this.isStraightFromCell(row-1, col, 'up')) straightOk = false;
+              } else if (dir === 'down' && row < rows-1) {
+                if (!this.isStraightFromCell(row+1, col, 'down')) straightOk = false;
+              }
+            }
+            if (!straightOk) return false;
+          }
+        }
+        
+        // ۳. یک حلقهٔ بسته واحد بدون شاخه
+        const visitedEdges = new Set();
+        let startEdge = null;
+        for (let r=0; r<rows; r++) {
+          for (let c=0; c<cols-1; c++) if(h[r][c]) { startEdge = {type:'h',r,c}; break; }
+          if (startEdge) break;
+        }
+        if (!startEdge) {
+          for (let r=0; r<rows-1; r++) {
+            for (let c=0; c<cols; c++) if(v[r][c]) { startEdge = {type:'v',r,c}; break; }
+            if (startEdge) break;
+          }
+        }
+        if (!startEdge) return false; // هیچ خطی نیست
+        
+        // پیمایش
+        let current = startEdge;
+        let prev = null;
+        let steps = 0;
+        const maxSteps = 1000;
+        const edgeKey = (e) => `${e.type}|${e.r}|${e.c}`;
+        
+        while (steps < maxSteps) {
+          const key = edgeKey(current);
+          if (visitedEdges.has(key)) break;
+          visitedEdges.add(key);
+          
+          const nextEdges = this.getConnectedEdges(current, prev);
+          if (nextEdges.length !== 1) return false; // انشعاب یا بن‌بست
+          const next = nextEdges[0];
+          prev = current;
+          current = next;
+          steps++;
+        }
+        
+        // بررسی پوشش تمام یال‌ها
+        let totalEdges = 0;
+        for (let r=0; r<rows; r++) for (let c=0; c<cols-1; c++) if(h[r][c]) totalEdges++;
+        for (let r=0; r<rows-1; r++) for (let c=0; c<cols; c++) if(v[r][c]) totalEdges++;
+        
+        return visitedEdges.size === totalEdges && totalEdges > 0;
+      }
+      
+      hasTurnAtCell(r, c, incomingDir) {
+        const h = this.hEdges, v = this.vEdges;
+        let horizontal = false, vertical = false;
+        if (c > 0 && h[r][c-1]) horizontal = true;
+        if (c < this.cols-1 && h[r][c]) horizontal = true;
+        if (r > 0 && v[r-1][c]) vertical = true;
+        if (r < this.rows-1 && v[r][c]) vertical = true;
+        return (horizontal && vertical);
+      }
+      
+      isStraightFromCell(r, c, fromDir) {
+        const h = this.hEdges, v = this.vEdges;
+        if (fromDir === 'left' && c < this.cols-1) return h[r][c] === true;
+        if (fromDir === 'right' && c > 0) return h[r][c-1] === true;
+        if (fromDir === 'up' && r < this.rows-1) return v[r][c] === true;
+        if (fromDir === 'down' && r > 0) return v[r-1][c] === true;
+        return false;
+      }
+      
+      getConnectedEdges(edge, prevEdge) {
+        const { type, r, c } = edge;
+        const connections = [];
+        const h = this.hEdges, v = this.vEdges;
+        
+        if (type === 'h') {
+          const leftCell = { r, c };
+          const rightCell = { r, c: c+1 };
+          // از سلول چپ
+          if (c > 0 && h[r][c-1]) connections.push({ type:'h', r, col: c-1 });
+          if (r > 0 && v[r-1][c]) connections.push({ type:'v', r: r-1, col: c });
+          if (r < this.rows-1 && v[r][c]) connections.push({ type:'v', r, col: c });
+          // از سلول راست
+          if (c+1 < this.cols-1 && h[r][c+1]) connections.push({ type:'h', r, col: c+1 });
+          if (r > 0 && v[r-1][c+1]) connections.push({ type:'v', r: r-1, col: c+1 });
+          if (r < this.rows-1 && v[r][c+1]) connections.push({ type:'v', r, col: c+1 });
+        } else { // vertical
+          const topCell = { r, c };
+          const bottomCell = { r: r+1, c };
+          if (c > 0 && h[r][c-1]) connections.push({ type:'h', r, col: c-1 });
+          if (c < this.cols-1 && h[r][c]) connections.push({ type:'h', r, col: c });
+          if (r > 0 && v[r-1][c]) connections.push({ type:'v', r: r-1, col: c });
+          // bottom
+          if (c > 0 && h[r+1][c-1]) connections.push({ type:'h', r: r+1, col: c-1 });
+          if (c < this.cols-1 && h[r+1][c]) connections.push({ type:'h', r: r+1, col: c });
+          if (r+1 < this.rows-1 && v[r+1][c]) connections.push({ type:'v', r: r+1, col: c });
+        }
+        
+        return connections.filter(conn => {
+          if (!prevEdge) return true;
+          return !(conn.type === prevEdge.type && conn.r === prevEdge.r && conn.c === prevEdge.c);
+        });
+      }
+      
+      checkSolution() {
+        const isValid = this.validateSolution();
+        if (isValid) {
+          this.messageDiv.textContent = '🎉 آفرین! حلقه درست است.';
+          if (!this.puzzleCompleted) {
+            this.puzzleCompleted = true;
+            this.solvedCount++;
+            this.updateScoreUI();
+            
+            const currentTime = this.currentTimer;
+            if (this.bestTime === null || currentTime < this.bestTime) {
+              this.bestTime = currentTime;
+              this.updateBestTimeUI();
+            }
+            this.saveToStorage();
+            this.stopTimer();
+          }
+        } else {
+          this.messageDiv.textContent = '❌ حلقه نادرست است. دوباره تلاش کن.';
+        }
+      }
+      
+      // ---------- timer ----------
+      startTimer() {
+        if (this.timerInterval) return;
+        this.isTimerRunning = true;
+        this.timerInterval = setInterval(() => {
+          this.currentTimer++;
+          this.updateTimerUI();
+        }, 1000);
+      }
+      
+      stopTimer() {
+        if (this.timerInterval) {
+          clearInterval(this.timerInterval);
+          this.timerInterval = null;
+          this.isTimerRunning = false;
+        }
+      }
+      
+      updateTimerUI() {
+        if (this.timerDisplay) {
+          const m = Math.floor(this.currentTimer / 60).toString().padStart(2,'0');
+          const s = (this.currentTimer % 60).toString().padStart(2,'0');
+          this.timerDisplay.textContent = `${m}:${s}`;
+        }
+      }
+      
+      updateScoreUI() {
+        if (this.scoreDisplay) this.scoreDisplay.textContent = this.solvedCount;
+      }
+      
+      updateBestTimeUI() {
+        if (this.bestDisplay && this.bestTime !== null) {
+          const m = Math.floor(this.bestTime / 60).toString().padStart(2,'0');
+          const s = (this.bestTime % 60).toString().padStart(2,'0');
+          this.bestDisplay.textContent = `${m}:${s}`;
+        } else if (this.bestDisplay) {
+          this.bestDisplay.textContent = '--:--';
+        }
+      }
+      
+      // ---------- ذخیره و بازیابی ----------
+      saveToStorage() {
+        const state = {
+          hEdges: this.hEdges,
+          vEdges: this.vEdges,
+          solvedCount: this.solvedCount,
+          bestTime: this.bestTime,
+          currentTimer: this.currentTimer,
+          puzzleCompleted: this.puzzleCompleted
+        };
+        localStorage.setItem(CONFIG.storageKey, JSON.stringify(state));
+      }
+      
+      loadFromStorage() {
+        const saved = localStorage.getItem(CONFIG.storageKey);
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            if (data.hEdges && data.vEdges) {
+              this.hEdges = data.hEdges;
+              this.vEdges = data.vEdges;
+            }
+            this.solvedCount = data.solvedCount || 0;
+            this.bestTime = data.bestTime || null;
+            this.currentTimer = data.currentTimer || 0;
+            this.puzzleCompleted = data.puzzleCompleted || false;
+            this.updateTimerUI();
+            this.updateScoreUI();
+            this.updateBestTimeUI();
+            if (this.puzzleCompleted) this.stopTimer();
+          } catch(e) {}
+        }
+      }
+      
+      // ---------- رسم ----------
+      render() {
+        const ctx = this.ctx;
+        const w = this.canvas.width, h = this.canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        const cell = this.getCellSize();
+        if (cell <= 0) return;
+        
+        // رسم خطوط شبکه
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid-line') || '#94a3b8';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i <= this.rows; i++) {
+          ctx.beginPath();
+          ctx.moveTo(0, i * cell);
+          ctx.lineTo(w, i * cell);
+          ctx.stroke();
+        }
+        for (let i = 0; i <= this.cols; i++) {
+          ctx.beginPath();
+          ctx.moveTo(i * cell, 0);
+          ctx.lineTo(i * cell, h);
+          ctx.stroke();
+        }
+        
+        // رسم دایره‌ها
+        this.circles.forEach(circ => {
+          const { row, col, type } = circ;
+          const cx = col * cell + cell/2;
+          const cy = row * cell + cell/2;
+          const radius = cell * CONFIG.circleRadiusFactor;
+          
+          ctx.beginPath();
+          ctx.arc(cx, cy, radius, 0, 2*Math.PI);
+          ctx.fillStyle = type === 'white' ? '#f8fafc' : '#0f172a';
+          ctx.fill();
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 1.8;
+          ctx.stroke();
+          if (type === 'white') {
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius*0.5, 0, 2*Math.PI);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fill();
+          }
+        });
+        
+        // رسم خطوط حلقه
+        ctx.lineWidth = cell * CONFIG.lineWidthFactor;
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineCap = 'round';
+        
+        for (let r = 0; r < this.rows; r++) {
+          for (let c = 0; c < this.cols - 1; c++) {
+            if (this.hEdges[r][c]) {
+              const x1 = c * cell + cell/2;
+              const y1 = r * cell + cell/2;
+              const x2 = (c+1) * cell + cell/2;
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(x2, y1);
+              ctx.stroke();
+            }
+          }
+        }
+        for (let r = 0; r < this.rows - 1; r++) {
+          for (let c = 0; c < this.cols; c++) {
+            if (this.vEdges[r][c]) {
+              const x1 = c * cell + cell/2;
+              const y1 = r * cell + cell/2;
+              const y2 = (r+1) * cell + cell/2;
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(x1, y2);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+    }
+
+    // راه‌اندازی بازی درون div مشخص
+    const container = document.getElementById('masyu-game');
+    if (container) {
+      const game = new MasyuGame(container);
+      // رفع مشکل resize اولیه
+      setTimeout(() => game.resizeCanvas(), 20);
+    } else {
+      console.warn('Div with id "masyu-game" not found.');
+    }
+  })();
+</script>
+</body>
+</html>

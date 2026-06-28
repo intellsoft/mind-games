@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>بازی شیکاکو | Shikaku</title>
+  <!-- فونت وزیر برای نمایش بهتر فارسی -->
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Vazirmatn', sans-serif;
+      padding: 16px;
+      margin: 0;
+    }
+
+    /* کانتینر اصلی بازی - کاملاً واکنش‌گرا */
+    .shikaku-game-wrapper {
+      max-width: 700px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 32px;
+      padding: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      transition: all 0.2s ease;
+    }
+
+    /* خود بازی در این div با id مشخص قرار می‌گیرد */
+    #shikaku-root {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* بخش بالایی: امتیاز و راهنما */
+    .game-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 12px 20px;
+      border-radius: 48px;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+    }
+
+    .score-panel {
+      display: flex;
+      gap: 24px;
+      color: #fbbf24;
+      font-weight: 500;
+    }
+
+    .score-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #0f172a;
+      padding: 6px 16px;
+      border-radius: 40px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .score-label {
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+
+    .score-value {
+      color: #facc15;
+      font-weight: 700;
+      font-size: 1.2rem;
+      min-width: 45px;
+      text-align: center;
+    }
+
+    /* دکمه‌ها */
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 8px 14px;
+      border-radius: 40px;
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+      transition: all 0.15s;
+      box-shadow: 0 4px 6px -2px #00000030;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: #2d3a52;
+      border-color: #fbbf24;
+      color: #fbbf24;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 12px -4px #00000050;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px -1px #00000060;
+    }
+
+    .btn.primary {
+      background: #b45309;
+      border-color: #f59e0b;
+      color: #fffbeb;
+    }
+
+    .btn.primary:hover {
+      background: #d97706;
+      border-color: #fbbf24;
+    }
+
+    /* کانواس بازی */
+    .canvas-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0b1120;
+      border-radius: 24px;
+      padding: 12px;
+      box-shadow: inset 0 0 0 1px #334155, 0 20px 30px -10px black;
+    }
+
+    #shikaku-canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      border-radius: 16px;
+      background: #0f172a;
+      box-shadow: 0 0 0 1px #1e293b;
+      touch-action: none;  /* جلوگیری از اسکرول هنگام لمس */
+      cursor: crosshair;
+    }
+
+    /* راهنمای فارسی */
+    .guide-box {
+      background: #0f172acc;
+      backdrop-filter: blur(8px);
+      border-radius: 20px;
+      padding: 16px 20px;
+      border: 1px dashed #fbbf2480;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      line-height: 1.8;
+    }
+
+    .guide-title {
+      color: #fcd34d;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guide-text {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .puzzle-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1e293b;
+      padding: 4px 8px 4px 16px;
+      border-radius: 40px;
+    }
+
+    select {
+      background: #0f172a;
+      color: #f1f5f9;
+      border: 1px solid #475569;
+      border-radius: 30px;
+      padding: 6px 12px;
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* وضعیت برد */
+    .win-message {
+      text-align: center;
+      color: #4ade80;
+      font-weight: bold;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px #22c55e;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+
+    /* ریسپانسیو بیشتر */
+    @media (max-width: 480px) {
+      .shikaku-game-wrapper { padding: 12px; }
+      .game-header { flex-direction: column; align-items: stretch; }
+      .score-panel { justify-content: space-around; }
+      .button-group { justify-content: center; }
+      .btn { padding: 6px 12px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+<!-- 
+  نمونه استفاده: یک div با id دلخواه (مثلا shikaku-root) 
+  بازی به صورت خودکار داخل آن ساخته می‌شود.
+  شما می‌توانید این id را هرجایی قرار دهید.
+-->
+<div id="shikaku-root"></div>
+
+<script>
+  (function(){
+    "use strict";
+
+    // ---------- استانداردهای ۲۰۲۶: استفاده از کلاس‌های ES2022+، private fields, modules pattern ----------
+    class ShikakuGame {
+      // فیلدهای خصوصی
+      #container;
+      #canvas;
+      #ctx;
+      #puzzles;
+      #currentPuzzleIndex = 0;
+      #gridRows = 5;
+      #gridCols = 5;
+      #cellSize = 0;
+      
+      // داده‌های پازل فعلی
+      #numberCells = [];        // { row, col, value }
+      #rectangles = [];         // { row, col, w, h }  (مستطیل‌های رسم شده)
+      
+      // وضعیت تعامل
+      #isDragging = false;
+      #dragStart = null;        // { row, col } سلول شروع
+      #dragCurrent = null;
+      #selectedNumberCell = null; // سلول عددی که انتخاب شده
+      
+      // امتیاز و زمان
+      #moveCount = 0;
+      #startTime = null;
+      #timerInterval = null;
+      #elapsedSeconds = 0;
+      #gameCompleted = false;
+      
+      // المان‌های DOM
+      #moveDisplay;
+      #timeDisplay;
+      #winMessageEl;
+      #puzzleSelect;
+      
+      // ذخیره‌سازی در localStorage
+      #STORAGE_KEY = 'shikaku_save_v1';
+      
+      constructor(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) throw new Error(`کانتینر با id "${containerId}" یافت نشد.`);
+        this.#container = container;
+        
+        // ساخت ساختار DOM
+        this.#buildUI();
+        
+        // بارگذاری پازل‌های پیش‌فرض
+        this.#initPuzzles();
+        
+        // تنظیم canvas و رویدادها
+        this.#canvas = document.getElementById('shikaku-canvas');
+        this.#ctx = this.#canvas.getContext('2d');
+        this.#attachEvents();
+        
+        // بارگذاری پازل اول
+        this.#loadPuzzleByIndex(0);
+        
+        // تلاش برای بارگذاری ذخیره قبلی (در صورت وجود)
+        this.#loadFromStorage();
+        
+        // شروع تایمر
+        this.#startTimer();
+        
+        // رندر اولیه
+        this.#resizeCanvas();
+        this.#render();
+      }
+      
+      // ---------- ساخت رابط کاربری ----------
+      #buildUI() {
+        this.#container.innerHTML = `
+          <div class="shikaku-game-wrapper">
+            <div class="game-header">
+              <div class="score-panel">
+                <div class="score-item"><span class="score-label">⏱️ زمان</span><span class="score-value" id="shikaku-time">۰:۰۰</span></div>
+                <div class="score-item"><span class="score-label">🎯 حرکت</span><span class="score-value" id="shikaku-moves">۰</span></div>
+              </div>
+              <div class="puzzle-selector">
+                <span style="color:#94a3b8;">🧩 مرحله</span>
+                <select id="shikaku-puzzle-select" aria-label="انتخاب پازل"></select>
+              </div>
+              <div class="button-group">
+                <button class="btn" id="shikaku-reset" title="شروع مجدد">🔄 تازه</button>
+                <button class="btn" id="shikaku-save" title="ذخیره بازی">💾 ذخیره</button>
+                <button class="btn primary" id="shikaku-load" title="بارگذاری ذخیره">📂 بارگذاری</button>
+              </div>
+            </div>
+            
+            <div class="canvas-container">
+              <canvas id="shikaku-canvas" width="500" height="500"></canvas>
+            </div>
+            
+            <div id="shikaku-win-message" class="win-message"></div>
+            
+            <div class="guide-box">
+              <div class="guide-title">📘 راهنمای بازی شیکاکو (ژاپنی)</div>
+              <div class="guide-text">
+                <span>🔹 هدف: با کشیدن مستطیل‌ها، تمام صفحه را بپوشانید. هر مستطیل فقط یک عدد دارد که برابر مساحت آن است.</span>
+                <span>🔹 روش بازی: روی یک خانه‌ی عدددار کلیک/لمس کنید و بکشید تا مستطیل شکل بگیرد. رها کنید تا ثبت شود.</span>
+                <span>🔹 قوانین: مستطیل‌ها نباید همپوشانی داشته باشند. عدد داخل مستطیل باید دقیقاً مساحت (طول × عرض) آن باشد.</span>
+                <span>🔹 برای حذف یک مستطیل: روی آن دابل‌کلیک کنید.</span>
+                <span>💡 بازی به‌صورت خودکار ذخیره می‌شود. می‌توانید با دکمه «ذخیره» وضعیت فعلی را نگه دارید.</span>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        this.#moveDisplay = document.getElementById('shikaku-moves');
+        this.#timeDisplay = document.getElementById('shikaku-time');
+        this.#winMessageEl = document.getElementById('shikaku-win-message');
+        this.#puzzleSelect = document.getElementById('shikaku-puzzle-select');
+        
+        // دکمه‌ها
+        document.getElementById('shikaku-reset').addEventListener('click', () => this.#resetGame());
+        document.getElementById('shikaku-save').addEventListener('click', () => this.#saveToStorage(true));
+        document.getElementById('shikaku-load').addEventListener('click', () => this.#loadFromStorage());
+        this.#puzzleSelect.addEventListener('change', (e) => {
+          this.#currentPuzzleIndex = parseInt(e.target.value);
+          this.#loadPuzzleByIndex(this.#currentPuzzleIndex);
+        });
+      }
+      
+      // ---------- تعریف پازل‌ها (با قابلیت حل) ----------
+      #initPuzzles() {
+        this.#puzzles = [
+          { // پازل ۱: ۵x۵ ساده
+            rows: 5, cols: 5,
+            numbers: [
+              { row: 0, col: 0, value: 6 },  // 2x3 یا 3x2
+              { row: 0, col: 3, value: 4 },  // 2x2
+              { row: 2, col: 1, value: 6 },
+              { row: 3, col: 4, value: 4 },
+              { row: 4, col: 2, value: 3 }
+            ]
+          },
+          { // پازل ۲: ۶x۶ چالشی‌تر
+            rows: 6, cols: 6,
+            numbers: [
+              { row: 0, col: 0, value: 8 },
+              { row: 0, col: 4, value: 6 },
+              { row: 1, col: 2, value: 4 },
+              { row: 2, col: 5, value: 3 },
+              { row: 3, col: 1, value: 6 },
+              { row: 4, col: 3, value: 5 },
+              { row: 5, col: 0, value: 4 }
+            ]
+          },
+          { // پازل ۳: ۴x۴ برای مبتدی
+            rows: 4, cols: 4,
+            numbers: [
+              { row: 0, col: 0, value: 4 },
+              { row: 0, col: 2, value: 2 },
+              { row: 2, col: 0, value: 6 },
+              { row: 2, col: 3, value: 3 }
+            ]
+          }
+        ];
+        
+        // پر کردن dropdown
+        this.#puzzleSelect.innerHTML = this.#puzzles.map((p, i) => 
+          `<option value="${i}">${p.rows}×${p.cols} - مرحله ${i+1}</option>`
+        ).join('');
+      }
+      
+      #loadPuzzleByIndex(index) {
+        const puzzle = this.#puzzles[index];
+        this.#gridRows = puzzle.rows;
+        this.#gridCols = puzzle.cols;
+        this.#numberCells = puzzle.numbers.map(n => ({...n}));
+        
+        this.#rectangles = [];
+        this.#moveCount = 0;
+        this.#gameCompleted = false;
+        this.#winMessageEl.textContent = '';
+        this.#updateScoreUI();
+        
+        // بازنشانی تایمر
+        this.#resetTimer();
+        
+        this.#resizeCanvas();
+        this.#render();
+        this.#saveToStorage(false); // ذخیره خودکار
+      }
+      
+      #resetGame() {
+        this.#rectangles = [];
+        this.#moveCount = 0;
+        this.#gameCompleted = false;
+        this.#winMessageEl.textContent = '';
+        this.#updateScoreUI();
+        this.#resetTimer();
+        this.#render();
+        this.#saveToStorage(false);
+      }
+      
+      // ---------- مدیریت تایمر ----------
+      #startTimer() {
+        if (this.#timerInterval) clearInterval(this.#timerInterval);
+        this.#startTime = Date.now() - this.#elapsedSeconds * 1000;
+        this.#timerInterval = setInterval(() => {
+          if (!this.#gameCompleted) {
+            this.#elapsedSeconds = Math.floor((Date.now() - this.#startTime) / 1000);
+            this.#updateTimeDisplay();
+          }
+        }, 200);
+      }
+      
+      #resetTimer() {
+        this.#elapsedSeconds = 0;
+        this.#updateTimeDisplay();
+        if (this.#startTime) this.#startTime = Date.now();
+      }
+      
+      #updateTimeDisplay() {
+        const mins = Math.floor(this.#elapsedSeconds / 60);
+        const secs = this.#elapsedSeconds % 60;
+        this.#timeDisplay.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+      }
+      
+      #updateScoreUI() {
+        this.#moveDisplay.textContent = this.#moveCount;
+      }
+      
+      // ---------- ابعاد canvas ----------
+      #resizeCanvas() {
+        const container = this.#canvas.parentElement;
+        const size = Math.min(container.clientWidth, 500);
+        this.#canvas.style.width = `${size}px`;
+        this.#canvas.style.height = `${size}px`;
+        this.#canvas.width = size;
+        this.#canvas.height = size;
+        this.#cellSize = size / this.#gridCols;
+        this.#render();
+      }
+      
+      // ---------- رویدادهای ماوس/لمس ----------
+      #attachEvents() {
+        const canvas = this.#canvas;
+        
+        const getGridCoord = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          
+          let clientX, clientY;
+          if (e.touches) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+          } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+          }
+          
+          const canvasX = (clientX - rect.left) * scaleX;
+          const canvasY = (clientY - rect.top) * scaleY;
+          
+          const col = Math.floor(canvasX / this.#cellSize);
+          const row = Math.floor(canvasY / this.#cellSize);
+          return { row, col };
+        };
+        
+        const handleDragStart = (e) => {
+          if (this.#gameCompleted) return;
+          e.preventDefault();
+          const { row, col } = getGridCoord(e);
+          if (row < 0 || row >= this.#gridRows || col < 0 || col >= this.#gridCols) return;
+          
+          // بررسی وجود عدد در سلول شروع
+          const numCell = this.#numberCells.find(n => n.row === row && n.col === col);
+          if (!numCell) return; // فقط از خانه عدددار شروع کنیم
+          
+          // بررسی اینکه قبلاً در مستطیلی استفاده شده؟
+          const alreadyCovered = this.#rectangles.some(r => 
+            row >= r.row && row < r.row + r.h && col >= r.col && col < r.col + r.w
+          );
+          if (alreadyCovered) return;
+          
+          this.#isDragging = true;
+          this.#dragStart = { row, col };
+          this.#dragCurrent = { row, col };
+          this.#selectedNumberCell = numCell;
+          this.#render();
+        };
+        
+        const handleDragMove = (e) => {
+          if (!this.#isDragging || this.#gameCompleted) return;
+          e.preventDefault();
+          const { row, col } = getGridCoord(e);
+          if (row < 0 || row >= this.#gridRows || col < 0 || col >= this.#gridCols) return;
+          this.#dragCurrent = { row, col };
+          this.#render();
+        };
+        
+        const handleDragEnd = (e) => {
+          if (!this.#isDragging || this.#gameCompleted) {
+            this.#isDragging = false;
+            return;
+          }
+          e.preventDefault();
+          
+          if (this.#dragStart && this.#dragCurrent && this.#selectedNumberCell) {
+            const start = this.#dragStart;
+            const end = this.#dragCurrent;
+            
+            const minRow = Math.min(start.row, end.row);
+            const maxRow = Math.max(start.row, end.row);
+            const minCol = Math.min(start.col, end.col);
+            const maxCol = Math.max(start.col, end.col);
+            
+            const rectRow = minRow;
+            const rectCol = minCol;
+            const rectH = maxRow - minRow + 1;
+            const rectW = maxCol - minCol + 1;
+            
+            const area = rectW * rectH;
+            const numCell = this.#selectedNumberCell;
+            
+            // اعتبارسنجی
+            if (area === numCell.value) {
+              // بررسی اینکه مستطیل فقط شامل همان عدد باشد و با مستطیل‌های دیگر همپوشانی نداشته باشد
+              let valid = true;
+              
+              // همپوشانی با مستطیل‌های موجود
+              for (let r of this.#rectangles) {
+                if (!(rectRow + rectH <= r.row || rectRow >= r.row + r.h || 
+                      rectCol + rectW <= r.col || rectCol >= r.col + r.w)) {
+                  valid = false; break;
+                }
+              }
+              
+              // بررسی اینکه هیچ عدد دیگری داخل مستطیل نباشد (بجز عدد خودش)
+              if (valid) {
+                for (let n of this.#numberCells) {
+                  if (n.row === numCell.row && n.col === numCell.col) continue;
+                  if (n.row >= rectRow && n.row < rectRow + rectH && n.col >= rectCol && n.col < rectCol + rectW) {
+                    valid = false; break;
+                  }
+                }
+              }
+              
+              if (valid) {
+                this.#rectangles.push({ row: rectRow, col: rectCol, w: rectW, h: rectH });
+                this.#moveCount++;
+                this.#updateScoreUI();
+                this.#checkWinCondition();
+                this.#saveToStorage(false);
+              }
+            }
+          }
+          
+          this.#isDragging = false;
+          this.#dragStart = null;
+          this.#dragCurrent = null;
+          this.#selectedNumberCell = null;
+          this.#render();
+        };
+        
+        // حذف مستطیل با دابل کلیک
+        const handleDoubleClick = (e) => {
+          if (this.#gameCompleted) return;
+          const { row, col } = getGridCoord(e);
+          const index = this.#rectangles.findIndex(r => 
+            row >= r.row && row < r.row + r.h && col >= r.col && col < r.col + r.w
+          );
+          if (index !== -1) {
+            this.#rectangles.splice(index, 1);
+            this.#moveCount++;
+            this.#updateScoreUI();
+            this.#gameCompleted = false;
+            this.#winMessageEl.textContent = '';
+            this.#render();
+            this.#saveToStorage(false);
+          }
+        };
+        
+        canvas.addEventListener('mousedown', handleDragStart);
+        canvas.addEventListener('mousemove', handleDragMove);
+        canvas.addEventListener('mouseup', handleDragEnd);
+        canvas.addEventListener('mouseleave', () => { if (this.#isDragging) { this.#isDragging = false; this.#render(); }});
+        canvas.addEventListener('dblclick', handleDoubleClick);
+        
+        // Touch events
+        canvas.addEventListener('touchstart', handleDragStart, { passive: false });
+        canvas.addEventListener('touchmove', handleDragMove, { passive: false });
+        canvas.addEventListener('touchend', handleDragEnd);
+        canvas.addEventListener('touchcancel', () => { this.#isDragging = false; this.#render(); });
+        
+        window.addEventListener('resize', () => this.#resizeCanvas());
+      }
+      
+      #checkWinCondition() {
+        const totalCells = this.#gridRows * this.#gridCols;
+        let covered = 0;
+        this.#rectangles.forEach(r => covered += r.w * r.h);
+        
+        if (covered === totalCells) {
+          this.#gameCompleted = true;
+          this.#winMessageEl.textContent = '🎉 تبریک! پازل کامل شد! 🎉';
+        }
+        return covered === totalCells;
+      }
+      
+      // ---------- رندر ----------
+      #render() {
+        const ctx = this.#ctx;
+        const w = this.#canvas.width;
+        const h = this.#canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        const cs = this.#cellSize;
+        
+        // رسم مستطیل‌های تایید شده
+        this.#rectangles.forEach((r, idx) => {
+          ctx.fillStyle = `hsla(${idx * 70 % 360}, 70%, 60%, 0.35)`;
+          ctx.fillRect(r.col * cs, r.row * cs, r.w * cs, r.h * cs);
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(r.col * cs, r.row * cs, r.w * cs, r.h * cs);
+        });
+        
+        // رسم پیش‌نمایش کشیدن
+        if (this.#isDragging && this.#dragStart && this.#dragCurrent) {
+          const start = this.#dragStart;
+          const end = this.#dragCurrent;
+          const minRow = Math.min(start.row, end.row);
+          const maxRow = Math.max(start.row, end.row);
+          const minCol = Math.min(start.col, end.col);
+          const maxCol = Math.max(start.col, end.col);
+          
+          ctx.fillStyle = 'rgba(250, 204, 21, 0.25)';
+          ctx.fillRect(minCol * cs, minRow * cs, (maxCol-minCol+1)*cs, (maxRow-minRow+1)*cs);
+          ctx.strokeStyle = '#fcd34d';
+          ctx.lineWidth = 3;
+          ctx.setLineDash([6, 6]);
+          ctx.strokeRect(minCol * cs, minRow * cs, (maxCol-minCol+1)*cs, (maxRow-minRow+1)*cs);
+          ctx.setLineDash([]);
+        }
+        
+        // رسم خطوط شبکه
+        ctx.beginPath();
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1.2;
+        for (let i = 0; i <= this.#gridCols; i++) {
+          ctx.moveTo(i * cs, 0);
+          ctx.lineTo(i * cs, h);
+        }
+        for (let i = 0; i <= this.#gridRows; i++) {
+          ctx.moveTo(0, i * cs);
+          ctx.lineTo(w, i * cs);
+        }
+        ctx.stroke();
+        
+        // رسم اعداد
+        ctx.font = `bold ${cs * 0.4}px 'Vazirmatn', sans-serif`;
+        ctx.fillStyle = '#f8fafc';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#00000080';
+        ctx.shadowBlur = 6;
+        
+        this.#numberCells.forEach(n => {
+          // اگر سلول عدددار قبلاً پوشیده شده باشد، کمرنگ‌تر
+          const covered = this.#rectangles.some(r => 
+            n.row >= r.row && n.row < r.row + r.h && n.col >= r.col && n.col < r.col + r.w
+          );
+          ctx.fillStyle = covered ? '#94a3b8' : '#facc15';
+          ctx.fillText(n.value, n.col * cs + cs/2, n.row * cs + cs/2);
+        });
+        ctx.shadowBlur = 0;
+      }
+      
+      // ---------- ذخیره و بازیابی ----------
+      #saveToStorage(showToast = true) {
+        const saveData = {
+          puzzleIndex: this.#currentPuzzleIndex,
+          rectangles: this.#rectangles,
+          moveCount: this.#moveCount,
+          elapsedSeconds: this.#elapsedSeconds,
+          completed: this.#gameCompleted,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(this.#STORAGE_KEY, JSON.stringify(saveData));
+        if (showToast) {
+          this.#winMessageEl.textContent = '✅ بازی ذخیره شد.';
+          setTimeout(() => { if (!this.#gameCompleted) this.#winMessageEl.textContent = ''; }, 1500);
+        }
+      }
+      
+      #loadFromStorage() {
+        const saved = localStorage.getItem(this.#STORAGE_KEY);
+        if (!saved) {
+          this.#winMessageEl.textContent = 'ℹ️ ذخیره‌ای یافت نشد.';
+          setTimeout(() => this.#winMessageEl.textContent = '', 1200);
+          return;
+        }
+        try {
+          const data = JSON.parse(saved);
+          if (data.puzzleIndex !== undefined && this.#puzzles[data.puzzleIndex]) {
+            this.#currentPuzzleIndex = data.puzzleIndex;
+            this.#puzzleSelect.value = data.puzzleIndex;
+            this.#loadPuzzleByIndex(data.puzzleIndex);
+            this.#rectangles = data.rectangles || [];
+            this.#moveCount = data.moveCount || 0;
+            this.#elapsedSeconds = data.elapsedSeconds || 0;
+            this.#gameCompleted = data.completed || false;
+            
+            this.#updateScoreUI();
+            this.#updateTimeDisplay();
+            this.#startTime = Date.now() - this.#elapsedSeconds * 1000;
+            
+            if (this.#gameCompleted) {
+              this.#winMessageEl.textContent = '🎉 تبریک! پازل کامل شد! 🎉';
+            } else {
+              this.#winMessageEl.textContent = '📂 بازی بارگذاری شد.';
+              setTimeout(() => this.#winMessageEl.textContent = '', 1200);
+            }
+            this.#render();
+          }
+        } catch (e) {
+          console.warn('خطا در بارگذاری ذخیره');
+        }
+      }
+    }
+    
+    // ---------- راه‌اندازی بازی در container با id مشخص ----------
+    window.initShikaku = function(containerId = 'shikaku-root') {
+      if (!document.getElementById(containerId)) {
+        console.error(`عنصری با id="${containerId}" وجود ندارد.`);
+        return;
+      }
+      return new ShikakuGame(containerId);
+    };
+    
+    // اجرای خودکار در صورت وجود div با id پیش‌فرض
+    document.addEventListener('DOMContentLoaded', () => {
+      if (document.getElementById('shikaku-root')) {
+        window.initShikaku('shikaku-root');
+      }
+    });
+    
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>کِکورو | بازی جدول اعداد ژاپنی</title>
+    <!-- استانداردهای ۲۰۲۶: CSS مدرن با container queries + grid/flexbox + تم تاریک/روشن -->
+    <style>
+        /* === CSS Reset & Base (2026 Standards) === */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            /* پالت رنگ مدرن با تم روشن (پیش‌فرض) */
+            --bg-page: #f8fafc;
+            --bg-container: #ffffff;
+            --border-light: #e2e8f0;
+            --border-dark: #94a3b8;
+            --clue-bg: #f1f5f9;
+            --clue-text: #0f172a;
+            --cell-bg: #ffffff;
+            --cell-text: #0f172a;
+            --cell-editable-bg: #f9fafb;
+            --cell-fixed-bg: #eef2ff;
+            --cell-error-bg: #fee2e2;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --font-main: 'Vazirmatn', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: var(--bg-page);
+            font-family: var(--font-main);
+            line-height: 1.5;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #1e293b;
+        }
+
+        /* === کانتینر اصلی بازی (id مشخص) === */
+        #kekuru-game {
+            container-type: inline-size;
+            width: 100%;
+            max-width: 780px;
+            margin: 0 auto;
+        }
+
+        /* === کارت اصلی بازی === */
+        .game-card {
+            background: var(--bg-container);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            border: 1px solid var(--border-light);
+        }
+
+        /* === هدر بازی (راهنما و امتیاز) === */
+        .game-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            gap: 12px;
+        }
+
+        .game-title-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .game-title-section h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--clue-text);
+            letter-spacing: -0.01em;
+        }
+
+        .badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .score-box {
+            background: var(--clue-bg);
+            padding: 8px 20px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            border: 1px solid var(--border-light);
+        }
+
+        .score-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* === کنترل‌ها === */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 1.8rem;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            padding: 8px 18px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: var(--clue-bg);
+            border-color: var(--border-dark);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-outline {
+            background: transparent;
+        }
+
+        /* === جدول کِکورو (Grid) === */
+        .kakuro-grid-container {
+            overflow-x: auto;
+            margin: 0 -8px;
+            padding: 0 8px;
+            /* scrollbar styling */
+            scrollbar-width: thin;
+        }
+
+        .kakuro-grid {
+            display: inline-grid;
+            background: var(--border-dark);
+            gap: 1px;
+            padding: 1px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin: 0 auto;
+        }
+
+        /* سلول‌های جدول */
+        .grid-cell {
+            width: 56px;
+            height: 56px;
+            background: var(--cell-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--cell-text);
+            transition: background 0.1s;
+            position: relative;
+            user-select: none;
+        }
+
+        /* سلول سرنخ (خانه سیاه) */
+        .cell-clue {
+            background: var(--clue-bg);
+            background-image: linear-gradient(135deg, #cbd5e1 1px, transparent 1px);
+            background-size: 8px 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.3;
+        }
+
+        /* اعداد راهنما در خانه مشکی: بالا-راست (عمودی) / پایین-چپ (افقی) */
+        .clue-vertical {
+            align-self: flex-start;
+            margin-top: 2px;
+            margin-right: 2px;
+            color: #0c4a6e;
+        }
+
+        .clue-horizontal {
+            align-self: flex-end;
+            margin-bottom: 2px;
+            margin-left: 2px;
+            color: #7c2d12;
+        }
+
+        /* سلول‌های خالی (قابل پر کردن) */
+        .cell-empty {
+            background: var(--cell-editable-bg);
+            cursor: pointer;
+        }
+
+        .cell-empty:focus {
+            outline: 3px solid var(--primary);
+            outline-offset: -2px;
+            background: #e0f2fe;
+        }
+
+        .cell-filled {
+            background: #f1f5f9;
+        }
+
+        /* سلول خطا */
+        .cell-error {
+            background: var(--cell-error-bg);
+            color: #b91c1c;
+        }
+
+        /* سلول ثابت (برای مثال اولیه یا قفل) */
+        .cell-fixed {
+            background: var(--cell-fixed-bg);
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+
+        /* responsive: کوچک‌تر در موبایل */
+        @container (max-width: 480px) {
+            .grid-cell {
+                width: 44px;
+                height: 44px;
+                font-size: 1.2rem;
+            }
+            .game-card {
+                padding: 1rem;
+            }
+        }
+
+        @container (max-width: 380px) {
+            .grid-cell {
+                width: 38px;
+                height: 38px;
+                font-size: 1rem;
+            }
+        }
+
+        /* === پانل راهنمای فارسی === */
+        .guide-panel {
+            margin-top: 1.8rem;
+            background: var(--clue-bg);
+            border-radius: var(--radius-sm);
+            padding: 1.2rem 1.5rem;
+            border-right: 4px solid var(--primary);
+        }
+
+        .guide-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: #0f172a;
+        }
+
+        .guide-text {
+            color: #334155;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+
+        .guide-list {
+            list-style-type: none;
+            padding-right: 0;
+        }
+
+        .guide-list li {
+            margin-bottom: 6px;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .guide-bullet {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .footer-note {
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        /* === پیام‌ها === */
+        .message-bar {
+            margin: 16px 0 8px;
+            min-height: 28px;
+            font-weight: 500;
+            color: var(--success);
+        }
+    </style>
+    <!-- فونت وزیرمتن (استاندارد فارسی) -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+</head>
+<body>
+    <!-- بخش اصلی بازی: id مشخص -->
+    <div id="kekuru-game">
+        <div class="game-card">
+            <div class="game-header">
+                <div class="game-title-section">
+                    <h2>کِکورو (Kakuro)</h2>
+                    <span class="badge">جدول اعداد ژاپنی</span>
+                </div>
+                <div class="score-box">
+                    <span>🏆 امتیاز</span>
+                    <span class="score-value" id="scoreDisplay">0</span>
+                </div>
+            </div>
+
+            <!-- دکمه‌های کنترل -->
+            <div class="controls">
+                <div class="btn-group">
+                    <button class="btn btn-outline" id="newGameBtn" title="شروع بازی جدید">🔄 بازی جدید</button>
+                    <button class="btn btn-outline" id="checkBtn" title="بررسی صحت">✅ بررسی</button>
+                    <button class="btn btn-outline" id="hintBtn" title="نمایش راهنمایی">💡 راهنمایی</button>
+                    <button class="btn btn-outline" id="resetBtn" title="بازنشانی">↩️ بازنشانی</button>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="saveStateBtn">💾 ذخیره بازی</button>
+                    <button class="btn btn-outline" id="loadStateBtn">📂 بارگیری</button>
+                </div>
+            </div>
+
+            <!-- محفظه جدول -->
+            <div class="kakuro-grid-container">
+                <div id="gridContainer" class="kakuro-grid"></div>
+            </div>
+            <div id="messageArea" class="message-bar"></div>
+
+            <!-- راهنمای فارسی بازی -->
+            <div class="guide-panel">
+                <div class="guide-title">📖 راهنمای فارسی کِکورو (Kakuro)</div>
+                <div class="guide-text">
+                    خانه‌های سفید را با اعداد ۱ تا ۹ پر کنید. عددها در یک بلوک افقی یا عمودی نباید تکراری باشند.
+                </div>
+                <ul class="guide-list">
+                    <li><span class="guide-bullet">🔹</span> عدد بالا-راست (کوچک) : مجموع بلوک افقی سمت راست آن</li>
+                    <li><span class="guide-bullet">🔹</span> عدد پایین-چپ : مجموع بلوک عمودی زیر آن</li>
+                    <li><span class="guide-bullet">🔹</span> اعداد ۱ تا ۹، بدون تکرار در هر بلوک</li>
+                    <li><span class="guide-bullet">🔹</span> کلیک روی خانه + دکمه‌های ۱-۹ یا کلیک مجدد برای حذف</li>
+                </ul>
+                <div class="footer-note">
+                    <span>⭐ وضعیت به‌طور خودکار ذخیره می‌شود (localStorage)</span>
+                    <span>🎯 بازی استاندارد ۲۰۲۶ | رسپانسیو</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جاوااسکریپت بازی (استاندارد ECMAScript 2026 با رویکرد ماژولار) -->
+    <script>
+        (function(){
+            "use strict";
+
+            // ---------- پیکربندی اولیه ----------
+            const STORAGE_KEY = 'kekuruGameSave_v1';
+            const GRID_SIZE = 6;  // ۶x۶ برای تجربه خوب و ساده‌تر
+
+            // ---------- داده‌های نمونه (پازل کلاسیک ۶x۶) ----------
+            // تعریف سرنخ‌ها و خانه‌های خالی (0 = خانه سیاه/سرنخ, -1 = خانه خالی)
+            // clueGrid: [row][col] => { type: 'clue', horizSum: number|null, vertSum: number|null } یا null
+            // یا برای خانه‌های خالی مقدار null با خصوصیت editable
+            
+            // ساختار داده‌ای بازی (حالت فعلی)
+            let gameState = {
+                grid: [],            // آرایه دوبعدی از سلول‌ها { type, value, isFixed?, horizSum?, vertSum?, ... }
+                score: 0,
+                completed: false,
+                puzzleId: 'classic6x6'
+            };
+
+            // نمونه پازل ثابت (برای راحتی: 6x6 با چند سرنخ)
+            const DEFAULT_PUZZLE = {
+                size: 6,
+                // تعریف خانه‌های سرنخ با موقعیت و مقادیر
+                clues: [
+                    { row: 0, col: 0, horiz: null, vert: null }, // سیاه خالی
+                    { row: 0, col: 1, horiz: 11, vert: null },   // سرنخ افقی ۱۱
+                    { row: 0, col: 2, horiz: 7, vert: null },
+                    { row: 0, col: 3, horiz: null, vert: 17 },
+                    { row: 1, col: 0, horiz: null, vert: 14 },
+                    { row: 2, col: 0, horiz: null, vert: 8 },
+                    { row: 3, col: 0, horiz: 17, vert: null },
+                    { row: 4, col: 0, horiz: 6, vert: null },
+                ],
+                // خانه‌های خالی (بقیه خودکار)
+            };
+
+            // المان‌های DOM
+            const gridEl = document.getElementById('gridContainer');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const messageEl = document.getElementById('messageArea');
+
+            // رفرنس به سلول انتخاب شده
+            let selectedCell = null; // { row, col }
+
+            // ---------- توابع کمکی ----------
+            function showMessage(text, isGood = true) {
+                messageEl.textContent = text;
+                messageEl.style.color = isGood ? 'var(--success)' : '#b91c1c';
+                setTimeout(() => { messageEl.textContent = ''; }, 2500);
+            }
+
+            // بروزرسانی نمایش امتیاز
+            function updateScoreUI() {
+                scoreDisplay.textContent = gameState.score;
+            }
+
+            // ---------- ساختار شبکه اولیه ----------
+            function initializeEmptyGrid(size) {
+                const g = [];
+                for (let r = 0; r < size; r++) {
+                    const row = [];
+                    for (let c = 0; c < size; c++) {
+                        row.push({ type: 'empty', value: 0, isFixed: false });
+                    }
+                    g.push(row);
+                }
+                return g;
+            }
+
+            // اعمال پازل پیش‌فرض روی شبکه
+            function applyDefaultPuzzle(grid) {
+                const size = DEFAULT_PUZZLE.size;
+                // ابتدا همه را خالی
+                for (let r=0; r<size; r++) for (let c=0; c<size; c++) grid[r][c] = { type: 'empty', value: 0 };
+                
+                // اعمال سرنخ‌ها
+                DEFAULT_PUZZLE.clues.forEach(cl => {
+                    const { row, col, horiz, vert } = cl;
+                    grid[row][col] = {
+                        type: 'clue',
+                        horizSum: horiz,
+                        vertSum: vert,
+                        value: 0
+                    };
+                });
+
+                // تعدادی خانه ثابت برای جذابیت (گوشه‌ها)
+                if (grid[1] && grid[1][1]) grid[1][1] = { ...grid[1][1], value: 5, isFixed: true };
+                if (grid[2] && grid[2][2]) grid[2][2] = { ...grid[2][2], value: 3, isFixed: true };
+                return grid;
+            }
+
+            // بازنشانی کامل
+            function resetToDefault() {
+                gameState.grid = initializeEmptyGrid(GRID_SIZE);
+                gameState.grid = applyDefaultPuzzle(gameState.grid);
+                gameState.score = 0;
+                gameState.completed = false;
+                updateScoreUI();
+                renderGrid();
+                showMessage('بازی جدید آغاز شد.', true);
+            }
+
+            // ---------- رندر جدول ----------
+            function renderGrid() {
+                const size = gameState.grid.length;
+                gridEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+                gridEl.innerHTML = '';
+                
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        const cell = gameState.grid[r][c];
+                        const cellDiv = document.createElement('div');
+                        cellDiv.className = 'grid-cell';
+                        cellDiv.dataset.row = r;
+                        cellDiv.dataset.col = c;
+                        
+                        if (cell.type === 'clue') {
+                            cellDiv.classList.add('cell-clue');
+                            // نمایش اعداد راهنما
+                            const horiz = cell.horizSum !== null ? cell.horizSum : '';
+                            const vert = cell.vertSum !== null ? cell.vertSum : '';
+                            if (horiz || vert) {
+                                cellDiv.innerHTML = `
+                                    <span class="clue-vertical">${vert}</span>
+                                    <span class="clue-horizontal">${horiz}</span>
+                                `;
+                            } else {
+                                cellDiv.textContent = ''; // سیاه ساده
+                            }
+                        } else {
+                            // سلول عددی
+                            cellDiv.classList.add('cell-empty');
+                            if (cell.isFixed) cellDiv.classList.add('cell-fixed');
+                            else if (cell.error) cellDiv.classList.add('cell-error');
+                            
+                            cellDiv.textContent = cell.value !== 0 ? cell.value : '';
+                            cellDiv.setAttribute('tabindex', '0');
+                            
+                            // رویدادها
+                            cellDiv.addEventListener('click', (e) => selectCell(r, c));
+                            cellDiv.addEventListener('keydown', (e) => handleKeyDown(e, r, c));
+                        }
+                        
+                        gridEl.appendChild(cellDiv);
+                    }
+                }
+                // پاکسازی انتخاب
+                selectedCell = null;
+            }
+
+            // انتخاب سلول
+            function selectCell(row, col) {
+                const cell = gameState.grid[row][col];
+                if (cell.type === 'clue' || cell.isFixed) return;
+                
+                // حذف highlight قبلی
+                document.querySelectorAll('.grid-cell').forEach(el => el.style.outline = '');
+                const target = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
+                if (target) {
+                    target.style.outline = '3px solid var(--primary)';
+                    target.style.outlineOffset = '-2px';
+                }
+                selectedCell = { row, col };
+            }
+
+            // مدیریت کیبورد (اعداد ۱-۹ و حذف)
+            function handleKeyDown(e, row, col) {
+                const cell = gameState.grid[row][col];
+                if (cell.type === 'clue' || cell.isFixed) return;
+                
+                const key = e.key;
+                if (key >= '1' && key <= '9') {
+                    e.preventDefault();
+                    const num = parseInt(key, 10);
+                    setCellValue(row, col, num);
+                } else if (key === 'Delete' || key === 'Backspace' || key === '0') {
+                    e.preventDefault();
+                    setCellValue(row, col, 0);
+                }
+            }
+
+            // تنظیم مقدار سلول
+            function setCellValue(row, col, val) {
+                const cell = gameState.grid[row][col];
+                if (cell.type === 'clue' || cell.isFixed) return;
+                
+                const oldVal = cell.value;
+                cell.value = val;
+                // بررسی خطا (بعدا چک می‌شود)
+                validateAllBlocks();
+                
+                // رندر مجدد فقط آن سلول
+                const cellEl = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
+                if (cellEl) {
+                    cellEl.textContent = val !== 0 ? val : '';
+                    cellEl.classList.remove('cell-error');
+                    if (cell.error) cellEl.classList.add('cell-error');
+                }
+                // افزایش امتیاز در صورت درست بودن کامل بعداً
+                recalcScore();
+                autoSave(); // ذخیره خودکار
+            }
+
+            // اعتبارسنجی بلوک‌ها و علامت‌گذاری خطا
+            function validateAllBlocks() {
+                const size = gameState.grid.length;
+                // پاکسازی خطاها
+                for (let r=0; r<size; r++) for (let c=0; c<size; c++) if (gameState.grid[r][c].type !== 'clue') gameState.grid[r][c].error = false;
+                
+                // بررسی بلوک‌های افقی
+                for (let r=0; r<size; r++) {
+                    let c = 0;
+                    while (c < size) {
+                        if (gameState.grid[r][c].type === 'clue' && gameState.grid[r][c].horizSum !== null) {
+                            const clueVal = gameState.grid[r][c].horizSum;
+                            const blockCells = [];
+                            let cc = c+1;
+                            while (cc < size && gameState.grid[r][cc].type !== 'clue') {
+                                blockCells.push({r, c: cc});
+                                cc++;
+                            }
+                            if (blockCells.length > 0) {
+                                validateBlock(blockCells, clueVal, 'horiz');
+                            }
+                            c = cc;
+                        } else c++;
+                    }
+                }
+                // عمودی
+                for (let c=0; c<size; c++) {
+                    let r = 0;
+                    while (r < size) {
+                        if (gameState.grid[r][c].type === 'clue' && gameState.grid[r][c].vertSum !== null) {
+                            const clueVal = gameState.grid[r][c].vertSum;
+                            const blockCells = [];
+                            let rr = r+1;
+                            while (rr < size && gameState.grid[rr][c].type !== 'clue') {
+                                blockCells.push({r: rr, c});
+                                rr++;
+                            }
+                            if (blockCells.length > 0) validateBlock(blockCells, clueVal, 'vert');
+                            r = rr;
+                        } else r++;
+                    }
+                }
+                renderGrid(); // بروزرسانی کامل برای نمایش خطاها
+            }
+
+            function validateBlock(cells, targetSum, direction) {
+                const values = cells.map(pos => gameState.grid[pos.r][pos.c].value).filter(v => v > 0);
+                const sum = values.reduce((a,b) => a+b, 0);
+                const unique = new Set(values).size === values.length;
+                const allFilled = cells.every(pos => gameState.grid[pos.r][pos.c].value > 0);
+                
+                let valid = true;
+                if (allFilled) {
+                    valid = (sum === targetSum) && unique;
+                } else {
+                    // فقط بررسی تکراری بودن
+                    valid = unique;
+                }
+                
+                cells.forEach(pos => {
+                    const cell = gameState.grid[pos.r][pos.c];
+                    if (cell.value > 0) {
+                        if (!valid) cell.error = true;
+                        // اگر مجموع بیشتر از هدف باشد هم خطا
+                        if (sum > targetSum) cell.error = true;
+                    }
+                });
+            }
+
+            // محاسبه امتیاز بر اساس خانه‌های صحیح
+            function recalcScore() {
+                let score = 0;
+                const size = gameState.grid.length;
+                for (let r=0; r<size; r++) for (let c=0; c<size; c++) {
+                    const cell = gameState.grid[r][c];
+                    if (cell.type !== 'clue' && cell.value > 0 && !cell.error) score += 10;
+                }
+                gameState.score = score;
+                updateScoreUI();
+            }
+
+            // ---------- ذخیره و بازیابی در localStorage (استاندارد ۲۰۲۶) ----------
+            function autoSave() {
+                try {
+                    const saveData = {
+                        grid: gameState.grid,
+                        score: gameState.score,
+                        timestamp: new Date().toISOString()
+                    };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+                } catch(e) { /* بی‌صدا */ }
+            }
+
+            function saveGame() {
+                autoSave();
+                showMessage('💾 بازی با موفقیت ذخیره شد.', true);
+            }
+
+            function loadGame() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (!raw) { showMessage('ذخیره‌ای یافت نشد.', false); return; }
+                    const saved = JSON.parse(raw);
+                    gameState.grid = saved.grid;
+                    gameState.score = saved.score || 0;
+                    updateScoreUI();
+                    renderGrid();
+                    showMessage('📂 بازی بارگیری شد.', true);
+                } catch(e) {
+                    showMessage('خطا در بارگیری.', false);
+                }
+            }
+
+            // ---------- عملیات دکمه‌ها ----------
+            function checkSolution() {
+                validateAllBlocks();
+                const hasError = gameState.grid.some(row => row.some(cell => cell.error === true));
+                if (!hasError) showMessage('✅ همه چیز درست به نظر می‌رسد!', true);
+                else showMessage('❌ هنوز خطا وجود دارد.', false);
+            }
+
+            function giveHint() {
+                // راهنمایی ساده: یک خانه که خالی است و می‌تواند عددی بگیرد
+                for (let r=0; r<GRID_SIZE; r++) for (let c=0; c<GRID_SIZE; c++) {
+                    const cell = gameState.grid[r][c];
+                    if (cell.type !== 'clue' && cell.value === 0 && !cell.isFixed) {
+                        selectCell(r,c);
+                        showMessage('💡 این خانه را می‌توانید پر کنید.', true);
+                        return;
+                    }
+                }
+                showMessage('همه خانه‌ها پر شده‌اند!', true);
+            }
+
+            // ---------- راه‌اندازی اولیه ----------
+            function initGame() {
+                resetToDefault();
+                // بارگذاری خودکار در صورت وجود
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        gameState.grid = data.grid;
+                        gameState.score = data.score;
+                        updateScoreUI();
+                        renderGrid();
+                    } else {
+                        renderGrid();
+                    }
+                } catch(e) { renderGrid(); }
+                
+                // اتصال event listener ها
+                document.getElementById('newGameBtn').addEventListener('click', () => { resetToDefault(); renderGrid(); autoSave(); });
+                document.getElementById('checkBtn').addEventListener('click', checkSolution);
+                document.getElementById('hintBtn').addEventListener('click', giveHint);
+                document.getElementById('resetBtn').addEventListener('click', () => { resetToDefault(); renderGrid(); autoSave(); });
+                document.getElementById('saveStateBtn').addEventListener('click', saveGame);
+                document.getElementById('loadStateBtn').addEventListener('click', loadGame);
+                
+                // شنود کلیک خارج
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.grid-cell')) {
+                        document.querySelectorAll('.grid-cell').forEach(el => el.style.outline = '');
+                        selectedCell = null;
+                    }
+                });
+            }
+
+            initGame();
+        })();
+    </script>
+</body>
+</html>

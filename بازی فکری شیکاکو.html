@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>بازی شیکاکو | معمای مستطیل‌های ژاپنی</title>
+    <style>
+        /* استایل‌های مدرن ۲۰۲۶ - کاملاً واکنش‌گرا */
+        #shikaku-game {
+            all: initial; /* بازنشانی استایل‌های بیرونی */
+            display: block;
+            font-family: 'Segoe UI', 'Vazirmatn', system-ui, sans-serif;
+            max-width: 700px;
+            margin: 0 auto;
+            background: linear-gradient(145deg, #f8f5f0 0%, #e8e0d5 100%);
+            border-radius: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 6px 12px rgba(0,0,0,0.05);
+            padding: 1.8rem 1.5rem;
+            box-sizing: border-box;
+            color: #2e241e;
+        }
+
+        #shikaku-game *,
+        #shikaku-game *::before,
+        #shikaku-game *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        .shikaku-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* هدر و امتیاز */
+        .game-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,250,240,0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 0.8rem 1.5rem;
+            border-radius: 4rem;
+            border: 1px solid rgba(210, 180, 140, 0.3);
+        }
+
+        .score-box {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: #2e241e;
+            color: #f3e7d9;
+            padding: 0.3rem 1.2rem;
+            border-radius: 3rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .score-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .level-badge {
+            background: #b87c4d;
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* بخش راهنما (قابل جمع شدن) */
+        .guide-section {
+            background: #dccbb8;
+            border-radius: 2rem;
+            padding: 0.2rem;
+            border: 1px solid #aa8e74;
+        }
+
+        .guide-toggle {
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2e241e;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            background: #efe3d5;
+            border-radius: 2rem;
+            transition: all 0.2s;
+        }
+
+        .guide-toggle:hover {
+            background: #e3d2c0;
+        }
+
+        .guide-content {
+            padding: 1.2rem 1.5rem;
+            background: #fcf6ed;
+            border-radius: 0 0 1.8rem 1.8rem;
+            color: #2e241e;
+            line-height: 1.7;
+            border-top: 1px solid #b2987a;
+            font-size: 1rem;
+        }
+
+        .guide-content p {
+            margin-bottom: 0.6rem;
+        }
+
+        .guide-content ul {
+            padding-right: 1.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .guide-content li {
+            margin-bottom: 0.4rem;
+        }
+
+        /* برد بازی */
+        .board-wrapper {
+            display: flex;
+            justify-content: center;
+            padding: 0.5rem;
+        }
+
+        .shikaku-board {
+            display: inline-grid;
+            background-color: #5d4a36;
+            padding: 6px;
+            border-radius: 24px;
+            box-shadow: inset 0 0 0 1px #3a2e24, 0 16px 24px -8px rgba(0,0,0,0.3);
+            gap: 2px;
+            grid-template-columns: repeat(5, 1fr); /* پیش‌فرض 5 ستون */
+            direction: ltr; /* مختصات چپ به راست برای رسم راحت‌تر */
+        }
+
+        .cell {
+            width: min(14vw, 80px);
+            height: min(14vw, 80px);
+            max-width: 90px;
+            max-height: 90px;
+            min-width: 48px;
+            min-height: 48px;
+            background-color: #f2e5d8;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: min(5vw, 28px);
+            font-weight: 700;
+            color: #3b2a1c;
+            box-shadow: inset 0 0 0 1px #ab8e72;
+            transition: background 0.15s;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .cell.number-cell {
+            background-color: #ffe6c2;
+            color: #1f140e;
+            box-shadow: inset 0 0 0 2px #b87c4d;
+        }
+
+        /* مستطیل‌های رسم شده (overlay) */
+        .board-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .rect-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .rect-block {
+            position: absolute;
+            background: rgba(184, 124, 77, 0.25);
+            border: 3px solid #a05f2c;
+            border-radius: 8px;
+            box-shadow: 0 0 0 1px #ffebd2 inset;
+            pointer-events: none;
+            transition: box-shadow 0.1s;
+        }
+
+        .rect-block.valid-temp {
+            background: rgba(70, 130, 100, 0.2);
+            border: 3px dashed #2d6a4f;
+        }
+
+        /* کنترل‌ها */
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+
+        .btn {
+            background: #f0e3d6;
+            border: none;
+            padding: 0.7rem 1.6rem;
+            border-radius: 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2e241e;
+            box-shadow: 0 4px 0 #7a624b, 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.08s ease;
+            border: 1px solid #dbbc9b;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex: 0 1 auto;
+        }
+
+        .btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #7a624b, 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn.reset-btn {
+            background: #cdaa8b;
+            color: #1e1610;
+        }
+
+        .btn.check-btn {
+            background: #5f7a5c;
+            color: #fef7e9;
+            box-shadow: 0 4px 0 #2e4032;
+            border-color: #6f8f6a;
+        }
+
+        .status-message {
+            background: #e6d6c4;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            min-height: 3rem;
+            display: flex;
+            align-items: center;
+            flex: 2 1 200px;
+            justify-content: center;
+            text-align: center;
+            border: 1px solid #b2987a;
+        }
+
+        /* برای مخفی کردن راهنما */
+        .hidden-content {
+            display: none;
+        }
+
+        /* واکنش‌گرایی بیشتر */
+        @media (max-width: 480px) {
+            #shikaku-game {
+                padding: 1rem 0.8rem;
+            }
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.95rem;
+            }
+            .game-header {
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        /* تغییر جهت اعداد فارسی */
+        .cell {
+            font-family: 'Vazirmatn', 'Segoe UI', sans-serif;
+        }
+    </style>
+</head>
+<body> 
+    <!-- این div جایی است که بازی در آن لود می‌شود. شما می‌توانید id را تغییر ندهید. -->
+    <div id="shikaku-game"></div>
+
+    <script>
+        (function(){
+            "use strict";
+
+            // ---------- استانداردهای ۲۰۲۶: ماژولار، async/await، کلاس‌های خصوصی (با #) ----------
+            class ShikakuGame {
+                // خصوصی
+                #container;
+                #boardSize = 5;
+                #grid = [];
+                #rectangles = [];        // مستطیل‌های تایید شده: { row1, col1, row2, col2, number }
+                #score = 0;
+                #currentLevel = 1;
+                #gameCompleted = false;
+                
+                // حالت رسم موقت
+                #isDrawing = false;
+                #startCell = null;        // { row, col }
+                #tempRect = null;         // { row1, col1, row2, col2 }
+                #cells = [];              // آرایه دو بعدی از المان‌های DOM
+
+                // المان‌های DOM
+                #boardEl;
+                #overlayEl;
+                #statusEl;
+                #scoreEl;
+                #levelEl;
+                #guideContentEl;
+
+                // داده ثابت مراحل (مرحله ۱)
+                #levelData = [
+                    {   // مرحله ۱ (۵x۵)
+                        grid: [
+                            [0,0,6,0,0],
+                            [0,4,0,0,0],
+                            [3,0,0,4,0],
+                            [0,0,0,0,0],
+                            [0,0,0,0,3]
+                        ]
+                    },
+                    {   // مرحله ۲ (۵x۵) نمونه دیگر
+                        grid: [
+                            [0,6,0,0,0],
+                            [0,0,0,3,0],
+                            [4,0,0,0,2],
+                            [0,0,5,0,0],
+                            [0,3,0,0,0]
+                        ]
+                    }
+                ];
+
+                constructor(containerId) {
+                    const container = document.getElementById(containerId);
+                    if (!container) throw new Error(`ظرف با شناسه ${containerId} یافت نشد.`);
+                    this.#container = container;
+                    this.#buildUI();
+                    this.#loadGameState();     // بارگذاری از localStorage
+                    this.#renderBoard();
+                    this.#attachEvents();
+                    this.#updateUI();
+                }
+
+                // ساخت رابط کاربری
+                #buildUI() {
+                    this.#container.innerHTML = `
+                        <div class="shikaku-container">
+                            <div class="game-header">
+                                <div class="level-badge">🎯 مرحله <span id="level-display">1</span></div>
+                                <div class="score-box">
+                                    <span class="score-icon">🏆</span>
+                                    <span id="score-display">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="guide-section">
+                                <button class="guide-toggle" id="guide-toggle-btn">
+                                    <span>📘 راهنمای بازی شیکاکو</span>
+                                    <span id="toggle-icon">▼</span>
+                                </button>
+                                <div class="guide-content" id="guide-content">
+                                    <p><strong>🎌 شیکاکو (Shikaku)</strong> یک معمای ژاپنی است. هدف تقسیم صفحه به مستطیل‌هایی است که:</p>
+                                    <ul>
+                                        <li>🔢 هر مستطیل دقیقاً یک عدد داشته باشد.</li>
+                                        <li>📏 مساحت مستطیل برابر با عدد داخل آن باشد.</li>
+                                        <li>🧩 مستطیل‌ها روی هم قرار نگیرند و کل صفحه را بپوشانند.</li>
+                                    </ul>
+                                    <p><strong>🖱️ روش رسم:</strong> روی یک خانه کلیک کنید (شروع مستطیل)، سپس روی خانه مقابل کلیک کنید (پایان). مستطیل رسم می‌شود. اگر شامل یک عدد با مساحت درست باشد، تایید می‌شود. برای حذف یک مستطیل دوباره روی آن کلیک کنید.</p>
+                                    <p><strong>💾</strong> پیشرفت شما به‌طور خودکار ذخیره می‌شود.</p>
+                                </div>
+                            </div>
+
+                            <div class="board-wrapper">
+                                <div class="board-container">
+                                    <div class="shikaku-board" id="shikaku-board" style="grid-template-columns: repeat(5, 1fr);"></div>
+                                    <div class="rect-overlay" id="rect-overlay"></div>
+                                </div>
+                            </div>
+
+                            <div class="action-bar">
+                                <button class="btn reset-btn" id="reset-btn">🔄 شروع مجدد مرحله</button>
+                                <button class="btn check-btn" id="check-btn">✅ بررسی راه‌حل</button>
+                                <div class="status-message" id="status-message">✨ برای شروع، یک خانه عدددار انتخاب کنید</div>
+                            </div>
+                        </div>
+                    `;
+
+                    this.#boardEl = this.#container.querySelector('#shikaku-board');
+                    this.#overlayEl = this.#container.querySelector('#rect-overlay');
+                    this.#statusEl = this.#container.querySelector('#status-message');
+                    this.#scoreEl = this.#container.querySelector('#score-display');
+                    this.#levelEl = this.#container.querySelector('#level-display');
+                    this.#guideContentEl = this.#container.querySelector('#guide-content');
+                    
+                    // راهنما toggle
+                    const toggleBtn = this.#container.querySelector('#guide-toggle-btn');
+                    const toggleIcon = this.#container.querySelector('#toggle-icon');
+                    toggleBtn.addEventListener('click', () => {
+                        this.#guideContentEl.classList.toggle('hidden-content');
+                        toggleIcon.textContent = this.#guideContentEl.classList.contains('hidden-content') ? '▶' : '▼';
+                    });
+                }
+
+                // اتصال رویدادها
+                #attachEvents() {
+                    this.#container.querySelector('#reset-btn').addEventListener('click', () => this.#resetLevel());
+                    this.#container.querySelector('#check-btn').addEventListener('click', () => this.#checkSolution());
+                    
+                    // استفاده از event delegation برای سلول‌ها
+                    this.#boardEl.addEventListener('click', (e) => {
+                        const cell = e.target.closest('.cell');
+                        if (!cell) return;
+                        const row = parseInt(cell.dataset.row);
+                        const col = parseInt(cell.dataset.col);
+                        this.#handleCellClick(row, col);
+                    });
+                }
+
+                // بارگذاری وضعیت از localStorage
+                #loadGameState() {
+                    try {
+                        const saved = localStorage.getItem('shikaku_save');
+                        if (saved) {
+                            const data = JSON.parse(saved);
+                            this.#currentLevel = data.level || 1;
+                            this.#score = data.score || 0;
+                            this.#rectangles = data.rectangles || [];
+                            // اطمینان از اینکه مرحله معتبر است
+                            if (this.#currentLevel > this.#levelData.length) this.#currentLevel = 1;
+                        } else {
+                            this.#currentLevel = 1;
+                            this.#score = 0;
+                            this.#rectangles = [];
+                        }
+                    } catch (e) {
+                        console.warn("خطا در بارگذاری ذخیره:", e);
+                        this.#currentLevel = 1;
+                        this.#score = 0;
+                        this.#rectangles = [];
+                    }
+                    this.#loadLevelGrid();
+                }
+
+                #loadLevelGrid() {
+                    const level = this.#levelData[this.#currentLevel - 1];
+                    this.#grid = level.grid.map(row => [...row]); // کپی عمیق
+                    this.#boardSize = this.#grid.length;
+                    // تنظیم ستون‌های grid
+                    this.#boardEl.style.gridTemplateColumns = `repeat(${this.#boardSize}, 1fr)`;
+                }
+
+                // ذخیره وضعیت
+                #saveGameState() {
+                    const saveData = {
+                        level: this.#currentLevel,
+                        score: this.#score,
+                        rectangles: this.#rectangles,
+                    };
+                    localStorage.setItem('shikaku_save', JSON.stringify(saveData));
+                }
+
+                // رندر برد و مستطیل‌ها
+                #renderBoard() {
+                    this.#boardEl.innerHTML = '';
+                    this.#cells = [];
+                    
+                    for (let r = 0; r < this.#boardSize; r++) {
+                        const rowCells = [];
+                        for (let c = 0; c < this.#boardSize; c++) {
+                            const cellValue = this.#grid[r][c];
+                            const cell = document.createElement('div');
+                            cell.className = 'cell' + (cellValue !== 0 ? ' number-cell' : '');
+                            cell.dataset.row = r;
+                            cell.dataset.col = c;
+                            cell.textContent = cellValue !== 0 ? this.#toPersianNum(cellValue) : '';
+                            this.#boardEl.appendChild(cell);
+                            rowCells.push(cell);
+                        }
+                        this.#cells.push(rowCells);
+                    }
+                    
+                    this.#renderRectangles();
+                }
+
+                #toPersianNum(num) {
+                    return num.toString().replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+                }
+
+                #renderRectangles() {
+                    this.#overlayEl.innerHTML = '';
+                    if (!this.#boardEl) return;
+                    
+                    const boardRect = this.#boardEl.getBoundingClientRect();
+                    if (boardRect.width === 0) return;
+                    
+                    const cellWidth = boardRect.width / this.#boardSize;
+                    const cellHeight = boardRect.height / this.#boardSize;
+                    
+                    // رسم مستطیل‌های تایید شده
+                    this.#rectangles.forEach(rect => {
+                        this.#drawRect(rect.row1, rect.col1, rect.row2, rect.col2, false);
+                    });
+                    
+                    // رسم مستطیل موقت (در حال رسم)
+                    if (this.#tempRect) {
+                        this.#drawRect(this.#tempRect.row1, this.#tempRect.col1, this.#tempRect.row2, this.#tempRect.col2, true);
+                    }
+                }
+
+                #drawRect(r1, c1, r2, c2, isTemp = false) {
+                    const boardRect = this.#boardEl.getBoundingClientRect();
+                    const cellW = boardRect.width / this.#boardSize;
+                    const cellH = boardRect.height / this.#boardSize;
+                    
+                    const minRow = Math.min(r1, r2);
+                    const maxRow = Math.max(r1, r2);
+                    const minCol = Math.min(c1, c2);
+                    const maxCol = Math.max(c1, c2);
+                    
+                    const left = minCol * cellW;
+                    const top = minRow * cellH;
+                    const width = (maxCol - minCol + 1) * cellW;
+                    const height = (maxRow - minRow + 1) * cellH;
+                    
+                    const div = document.createElement('div');
+                    div.className = 'rect-block' + (isTemp ? ' valid-temp' : '');
+                    div.style.left = left + 'px';
+                    div.style.top = top + 'px';
+                    div.style.width = width + 'px';
+                    div.style.height = height + 'px';
+                    this.#overlayEl.appendChild(div);
+                }
+
+                // مدیریت کلیک
+                #handleCellClick(row, col) {
+                    if (this.#gameCompleted) {
+                        this.#setStatus('🎉 مرحله تکمیل شده! برای ادامه دکمه بررسی را بزنید.', '#2d6a4f');
+                        return;
+                    }
+
+                    // بررسی کلیک روی مستطیل موجود برای حذف
+                    const clickedRectIndex = this.#findRectangleAt(row, col);
+                    if (clickedRectIndex !== -1) {
+                        this.#rectangles.splice(clickedRectIndex, 1);
+                        this.#tempRect = null;
+                        this.#isDrawing = false;
+                        this.#renderBoard();
+                        this.#saveGameState();
+                        this.#setStatus('✂️ مستطیل حذف شد.', '#7a5a3e');
+                        return;
+                    }
+
+                    if (!this.#isDrawing) {
+                        // شروع رسم
+                        this.#isDrawing = true;
+                        this.#startCell = { row, col };
+                        this.#tempRect = { row1: row, col1: col, row2: row, col2: col };
+                        this.#setStatus(`📍 شروع از (${this.#toPersianNum(row+1)},${this.#toPersianNum(col+1)}) - حالا گوشه مقابل را انتخاب کنید`, '#b87c4d');
+                    } else {
+                        // پایان رسم
+                        const r1 = this.#startCell.row;
+                        const c1 = this.#startCell.col;
+                        const r2 = row;
+                        const c2 = col;
+                        
+                        const minR = Math.min(r1, r2);
+                        const maxR = Math.max(r1, r2);
+                        const minC = Math.min(c1, c2);
+                        const maxC = Math.max(c1, c2);
+                        
+                        // بررسی اعتبار مستطیل
+                        const validation = this.#validateRectangle(minR, minC, maxR, maxC);
+                        
+                        if (validation.valid) {
+                            // اضافه کردن مستطیل
+                            this.#rectangles.push({
+                                row1: minR, col1: minC,
+                                row2: maxR, col2: maxC,
+                                number: validation.number
+                            });
+                            this.#setStatus(`✅ مستطیل با عدد ${this.#toPersianNum(validation.number)} اضافه شد.`, '#2d6a4f');
+                            this.#saveGameState();
+                        } else {
+                            this.#setStatus(`❌ ${validation.reason}`, '#b13e3e');
+                        }
+                        
+                        this.#isDrawing = false;
+                        this.#startCell = null;
+                        this.#tempRect = null;
+                    }
+                    
+                    this.#renderBoard();
+                }
+
+                #findRectangleAt(row, col) {
+                    return this.#rectangles.findIndex(rect => 
+                        row >= rect.row1 && row <= rect.row2 && col >= rect.col1 && col <= rect.col2
+                    );
+                }
+
+                #validateRectangle(r1, c1, r2, c2) {
+                    // بررسی همپوشانی با مستطیل‌های موجود
+                    for (let rect of this.#rectangles) {
+                        if (!(r2 < rect.row1 || r1 > rect.row2 || c2 < rect.col1 || c1 > rect.col2)) {
+                            return { valid: false, reason: 'این ناحیه با مستطیل دیگری همپوشانی دارد.' };
+                        }
+                    }
+                    
+                    // شمارش اعداد داخل مستطیل
+                    let numbers = [];
+                    for (let r = r1; r <= r2; r++) {
+                        for (let c = c1; c <= c2; c++) {
+                            if (this.#grid[r][c] !== 0) numbers.push(this.#grid[r][c]);
+                        }
+                    }
+                    
+                    if (numbers.length === 0) {
+                        return { valid: false, reason: 'هیچ عددی در این مستطیل وجود ندارد.' };
+                    }
+                    if (numbers.length > 1) {
+                        return { valid: false, reason: 'بیش از یک عدد در مستطیل قرار دارد.' };
+                    }
+                    
+                    const number = numbers[0];
+                    const area = (r2 - r1 + 1) * (c2 - c1 + 1);
+                    if (area !== number) {
+                        return { valid: false, reason: `مساحت (${this.#toPersianNum(area)}) با عدد (${this.#toPersianNum(number)}) برابر نیست.` };
+                    }
+                    
+                    return { valid: true, number };
+                }
+
+                #checkSolution() {
+                    // بررسی پوشش کامل و صحت
+                    const covered = Array(this.#boardSize).fill().map(() => Array(this.#boardSize).fill(false));
+                    let totalNumbers = 0;
+                    
+                    for (let rect of this.#rectangles) {
+                        for (let r = rect.row1; r <= rect.row2; r++) {
+                            for (let c = rect.col1; c <= rect.col2; c++) {
+                                if (covered[r][c]) {
+                                    this.#setStatus('❌ همپوشانی تشخیص داده شد.', '#b13e3e');
+                                    return;
+                                }
+                                covered[r][c] = true;
+                            }
+                        }
+                        // بررسی مجدد عدد
+                        const validation = this.#validateRectangle(rect.row1, rect.col1, rect.row2, rect.col2);
+                        if (!validation.valid) {
+                            this.#setStatus(`❌ خطا در مستطیل عدد ${this.#toPersianNum(rect.number)}: ${validation.reason}`, '#b13e3e');
+                            return;
+                        }
+                    }
+                    
+                    // بررسی پوشش کل سلول‌ها
+                    for (let r = 0; r < this.#boardSize; r++) {
+                        for (let c = 0; c < this.#boardSize; c++) {
+                            if (!covered[r][c]) {
+                                this.#setStatus(`❌ سلول (${this.#toPersianNum(r+1)},${this.#toPersianNum(c+1)}) پوشش داده نشده.`, '#b13e3e');
+                                return;
+                            }
+                            if (this.#grid[r][c] !== 0) totalNumbers++;
+                        }
+                    }
+                    
+                    if (this.#rectangles.length !== totalNumbers) {
+                        this.#setStatus('⚠️ تعداد مستطیل‌ها با تعداد اعداد تطابق ندارد.', '#b87c4d');
+                        return;
+                    }
+                    
+                    // موفقیت
+                    this.#gameCompleted = true;
+                    const addedScore = 100 + (this.#boardSize * 10);
+                    this.#score += addedScore;
+                    this.#setStatus(`🎉 تبریک! مرحله کامل شد. ${this.#toPersianNum(addedScore)} امتیاز اضافه شد.`, '#1e7a5e');
+                    this.#updateUI();
+                    
+                    // اگر مرحله بعد وجود داشته باشد
+                    if (this.#currentLevel < this.#levelData.length) {
+                        this.#currentLevel++;
+                        this.#loadLevelGrid();
+                        this.#rectangles = [];
+                        this.#gameCompleted = false;
+                        this.#renderBoard();
+                        this.#setStatus(`✨ به مرحله ${this.#toPersianNum(this.#currentLevel)} خوش آمدید!`, '#b87c4d');
+                    } else {
+                        this.#setStatus(`🏁 شما تمام مراحل را کامل کردید! امتیاز نهایی: ${this.#toPersianNum(this.#score)}`, '#1e7a5e');
+                    }
+                    
+                    this.#saveGameState();
+                    this.#updateUI();
+                }
+
+                #resetLevel() {
+                    this.#rectangles = [];
+                    this.#isDrawing = false;
+                    this.#tempRect = null;
+                    this.#gameCompleted = false;
+                    this.#renderBoard();
+                    this.#setStatus('🔄 مرحله از نو آغاز شد.', '#7a5a3e');
+                    this.#saveGameState();
+                }
+
+                #setStatus(text, color) {
+                    this.#statusEl.textContent = text;
+                    this.#statusEl.style.backgroundColor = color + '20';
+                    this.#statusEl.style.color = '#1e1610';
+                }
+
+                #updateUI() {
+                    this.#scoreEl.textContent = this.#toPersianNum(this.#score);
+                    this.#levelEl.textContent = this.#toPersianNum(this.#currentLevel);
+                }
+
+                // به‌روزرسانی اندازه overlay هنگام تغییر اندازه پنجره
+                #handleResize = () => {
+                    this.#renderBoard();
+                };
+
+                // متد عمومی برای راه‌اندازی ResizeObserver (استاندارد ۲۰۲۶)
+                start() {
+                    window.addEventListener('resize', this.#handleResize);
+                    // برای تغییرات اندازه container
+                    const resizeObserver = new ResizeObserver(() => this.#renderBoard());
+                    resizeObserver.observe(this.#boardEl);
+                }
+            }
+
+            // راه‌اندازی بازی وقتی DOM آماده است
+            window.addEventListener('DOMContentLoaded', () => {
+                const game = new ShikakuGame('shikaku-game');
+                game.start();
+            });
+        })();
+    </script>
+</body>
+</html>

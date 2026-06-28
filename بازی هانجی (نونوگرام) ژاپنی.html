@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>هانجی | معمای تصویری ژاپنی</title>
+    <style>
+        /* === ریست و فونت پایه === */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f7f3e9 0%, #e8dfce 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', 'Vazirmatn', system-ui, sans-serif;
+            padding: 16px;
+            margin: 0;
+        }
+
+        /* کانتینر اصلی بازی — فقط با این id در صفحه قرار می‌گیرد */
+        #hanjie-game {
+            --cell-size: clamp(38px, 12vw, 64px);
+            --clue-size: clamp(28px, 8vw, 52px);
+            --primary-color: #2c3e50;
+            --accent-color: #b76e2e;
+            --board-bg: #fef9f0;
+            --filled-cell: #1e2b3a;
+            --x-mark: #9e7e6b;
+            --grid-line: #bba88b;
+            
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 250, 240, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 42px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.1);
+            padding: 24px 20px 28px;
+            border: 1px solid rgba(255, 245, 225, 0.5);
+            transition: all 0.2s ease;
+        }
+
+        /* هدر بازی */
+        .game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 0 8px;
+        }
+
+        .puzzle-title {
+            font-weight: 700;
+            font-size: 1.6rem;
+            color: #2e241e;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .puzzle-title i {
+            font-size: 1.9rem;
+        }
+
+        .score-area {
+            background: #2c3e50;
+            padding: 10px 18px;
+            border-radius: 60px;
+            color: #f3e7d3;
+            font-weight: 600;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1), 0 6px 0 #1a252f;
+            transform: translateY(-2px);
+        }
+
+        .score-value {
+            font-size: 1.8rem;
+            line-height: 1;
+            margin-left: 4px;
+            color: #f5d742;
+        }
+
+        .mistakes-badge {
+            background: #b34e4e;
+            border-radius: 30px;
+            padding: 4px 14px;
+            font-size: 0.9rem;
+            color: white;
+            margin-right: 10px;
+            box-shadow: inset 0 1px 3px #3a1a1a;
+        }
+
+        /* بخش اصلی تخته */
+        .board-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        /* گرید کلی (راهنماها + تخته) */
+        .hanjie-grid {
+            display: grid;
+            background-color: var(--board-bg);
+            border: 4px solid var(--primary-color);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 0 #1a252f, 0 8px 20px rgba(0,0,0,0.2);
+            user-select: none;
+        }
+
+        /* سلول‌های راهنمای ستون (بالا) */
+        .col-clue-cell {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            background: #dccbb6;
+            border-bottom: 2px solid #5e4e3c;
+            font-weight: 600;
+            color: #1e2b2a;
+            padding: 6px 2px 2px;
+            font-size: calc(var(--clue-size) * 0.3);
+            line-height: 1.3;
+            min-width: var(--cell-size);
+            min-height: var(--clue-size);
+        }
+
+        /* سلول‌های راهنمای سطر (چپ) */
+        .row-clue-cell {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            align-items: center;
+            background: #dccbb6;
+            border-left: 2px solid #5e4e3c;
+            font-weight: 600;
+            color: #1e2b2a;
+            padding: 2px 6px 2px 2px;
+            font-size: calc(var(--clue-size) * 0.3);
+            gap: 4px;
+            min-width: var(--clue-size);
+            min-height: var(--cell-size);
+        }
+
+        .clue-number {
+            display: inline-block;
+            background: #3f3228;
+            color: #efe2d0;
+            border-radius: 12px;
+            padding: 2px 6px;
+            margin: 1px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: inset 0 1px 2px #1f1a15;
+        }
+
+        /* سلول‌های بازی */
+        .game-cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background-color: #fdf3e7;
+            border: 1px solid var(--grid-line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.1s, transform 0.05s;
+            position: relative;
+            font-weight: bold;
+            font-size: calc(var(--cell-size) * 0.45);
+            color: #4d3e32;
+        }
+
+        .game-cell.filled {
+            background: var(--filled-cell);
+            border-color: #0f1a1f;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2);
+        }
+
+        .game-cell.x-mark::after {
+            content: "✕";
+            color: var(--x-mark);
+            font-size: calc(var(--cell-size) * 0.5);
+            font-weight: 300;
+            opacity: 0.8;
+        }
+
+        /* حالت hover برای دسکتاپ */
+        @media (hover: hover) {
+            .game-cell:hover {
+                background-color: #e9d9c6;
+                filter: brightness(0.98);
+            }
+            .game-cell.filled:hover {
+                background-color: #15222e;
+            }
+        }
+
+        /* حالت فعال/کلیک */
+        .game-cell:active {
+            transform: scale(0.94);
+        }
+
+        /* گوشه خالی بالای چپ */
+        .corner-spacer {
+            background: #b7a48e;
+            border-bottom: 2px solid #5e4e3c;
+            border-left: 2px solid #5e4e3c;
+            min-width: var(--clue-size);
+            min-height: var(--clue-size);
+        }
+
+        /* کنترل پنل */
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 22px 0 8px;
+        }
+
+        .btn {
+            background: #ece1d2;
+            border: none;
+            border-bottom: 5px solid #a28c78;
+            color: #2c241e;
+            padding: 10px 18px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+
+        .btn:active {
+            border-bottom-width: 2px;
+            transform: translateY(3px);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn.primary {
+            background: #2c5e72;
+            border-bottom-color: #1a3a47;
+            color: #f0ede5;
+        }
+
+        select.btn {
+            background: #d6c5b3;
+            padding: 10px 24px 10px 18px;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="%233d2e24" d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: left 10px center;
+            background-size: 18px;
+        }
+
+        /* راهنما */
+        .help-section {
+            margin-top: 18px;
+            background: #e7daca;
+            border-radius: 28px;
+            padding: 14px 22px;
+            border-right: 6px solid #a28c78;
+        }
+
+        .help-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .help-text {
+            color: #2c241e;
+            line-height: 1.8;
+        }
+
+        .help-text kbd {
+            background: #3a3129;
+            color: #f0dfcc;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 0 4px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* واکنش‌گرایی بیشتر */
+        @media (max-width: 480px) {
+            #hanjie-game {
+                padding: 16px 10px 20px;
+            }
+            .btn {
+                padding: 8px 14px;
+                font-size: 0.9rem;
+            }
+            .puzzle-title {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- بازی فقط در این div ظاهر می‌شود، هرجا خواستید این div را کپی کنید -->
+    <div id="hanjie-game"></div>
+
+    <script>
+        (function(){
+            "use strict";
+
+            // ======================== پیکربندی و داده‌های پازل ========================
+            const PUZZLES = {
+                heart: {
+                    name: '❤️ قلب',
+                    rows: [[2], [4], [1,1], [4], [2]],
+                    cols: [[2], [4], [1,1], [4], [2]],
+                    solution: [
+                        [0,1,1,1,0],
+                        [1,1,1,1,1],
+                        [1,0,1,0,1],
+                        [0,1,1,1,0],
+                        [0,0,1,0,0]
+                    ]
+                },
+                smile: {
+                    name: '😊 لبخند',
+                    rows: [[1,1], [5], [1,1], [0], [2,2]],
+                    cols: [[2], [1,1], [3], [1,1], [2]],
+                    solution: [
+                        [1,0,0,0,1],
+                        [1,1,1,1,1],
+                        [1,0,0,0,1],
+                        [0,0,0,0,0],
+                        [1,1,0,1,1]
+                    ]
+                },
+                duck: {
+                    name: '🦆 اردک',
+                    rows: [[3], [1,1], [5], [1,1], [1,1]],
+                    cols: [[1], [3], [1,1,1], [3], [1]],
+                    solution: [
+                        [0,1,1,1,0],
+                        [1,0,0,0,1],
+                        [1,1,1,1,1],
+                        [1,0,0,0,1],
+                        [1,0,0,0,1]
+                    ]
+                }
+            };
+
+            const DEFAULT_PUZZLE_ID = 'heart';
+            const MAX_SCORE = 100;
+            const PENALTY_PER_MISTAKE = 5;
+            const STORAGE_KEY = 'hanjie_save_2026';
+
+            // ======================== کلاس اصلی بازی ========================
+            class HanjieGame {
+                constructor(containerId) {
+                    this.container = document.getElementById(containerId);
+                    if (!this.container) {
+                        console.error('کانتینر با این id پیدا نشد');
+                        return;
+                    }
+                    
+                    // وضعیت داخلی
+                    this.currentPuzzleId = DEFAULT_PUZZLE_ID;
+                    this.puzzle = PUZZLES[this.currentPuzzleId];
+                    this.rows = this.puzzle.rows.length;
+                    this.cols = this.puzzle.cols.length;
+                    this.board = [];                 // 0: خالی, 1: پر, 2: ضربدر
+                    this.mistakes = 0;
+                    this.score = MAX_SCORE;
+                    this.gameCompleted = false;
+                    
+                    this.initBoard();
+                    this.loadFromStorage();
+                    this.render();
+                    this.attachEvents();
+                }
+
+                // مقداردهی اولیه تخته خالی
+                initBoard() {
+                    this.board = Array(this.rows).fill().map(() => Array(this.cols).fill(0));
+                }
+
+                // بارگذاری از localStorage
+                loadFromStorage() {
+                    try {
+                        const saved = localStorage.getItem(STORAGE_KEY);
+                        if (!saved) return;
+                        const data = JSON.parse(saved);
+                        
+                        // فقط اگر پازل ذخیره شده معتبر باشد
+                        if (data.puzzleId && PUZZLES[data.puzzleId]) {
+                            this.currentPuzzleId = data.puzzleId;
+                            this.puzzle = PUZZLES[this.currentPuzzleId];
+                            this.rows = this.puzzle.rows.length;
+                            this.cols = this.puzzle.cols.length;
+                        }
+                        
+                        if (data.board && Array.isArray(data.board) && data.board.length === this.rows) {
+                            this.board = data.board;
+                        } else {
+                            this.initBoard();
+                        }
+                        
+                        this.mistakes = (typeof data.mistakes === 'number') ? data.mistakes : 0;
+                        this.score = Math.max(0, MAX_SCORE - (this.mistakes * PENALTY_PER_MISTAKE));
+                        this.gameCompleted = data.gameCompleted || false;
+                        
+                        // اگر پازل کامل شده بود اما برد ذخیره شده با جواب یکی نیست، وضعیت را بازنشانی نکنیم (احترام به save)
+                    } catch (e) {
+                        console.warn('خطا در بارگذاری ذخیره:', e);
+                        this.resetGame();
+                    }
+                }
+
+                // ذخیره در localStorage
+                saveToStorage() {
+                    const saveData = {
+                        puzzleId: this.currentPuzzleId,
+                        board: this.board,
+                        mistakes: this.mistakes,
+                        gameCompleted: this.gameCompleted,
+                        lastUpdated: Date.now()
+                    };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+                }
+
+                // بازنشانی کامل (بدون پاک کردن ذخیره دستی)
+                resetBoard(keepPuzzle = true) {
+                    if (!keepPuzzle) {
+                        // اگر پازل عوض شود
+                    }
+                    this.initBoard();
+                    this.mistakes = 0;
+                    this.score = MAX_SCORE;
+                    this.gameCompleted = false;
+                    this.saveToStorage();
+                    this.render();
+                }
+
+                // تغییر پازل
+                changePuzzle(puzzleId) {
+                    if (!PUZZLES[puzzleId]) return;
+                    this.currentPuzzleId = puzzleId;
+                    this.puzzle = PUZZLES[puzzleId];
+                    this.rows = this.puzzle.rows.length;
+                    this.cols = this.puzzle.cols.length;
+                    this.initBoard();
+                    this.mistakes = 0;
+                    this.score = MAX_SCORE;
+                    this.gameCompleted = false;
+                    this.saveToStorage();
+                    this.render();
+                }
+
+                // مدیریت کلیک روی سلول
+                handleCellClick(row, col) {
+                    if (this.gameCompleted) return; // بازی تمام شده
+                    
+                    const current = this.board[row][col];
+                    // چرخش حالت: 0 -> 1 -> 2 -> 0
+                    const next = (current + 1) % 3;
+                    this.board[row][col] = next;
+                    
+                    // بررسی خطا فقط اگر خانه پر شده باشد و با جواب مغایرت داشته باشد
+                    if (next === 1) {
+                        const solution = this.puzzle.solution;
+                        if (solution[row][col] !== 1) {
+                            this.mistakes++;
+                            this.score = Math.max(0, MAX_SCORE - (this.mistakes * PENALTY_PER_MISTAKE));
+                        }
+                    }
+                    
+                    // ذخیره و بروزرسانی
+                    this.saveToStorage();
+                    this.render();
+                    
+                    // بررسی خودکار برد (اختیاری)
+                    if (this.checkVictory()) {
+                        this.gameCompleted = true;
+                        this.saveToStorage();
+                        this.render();
+                        this.showVictoryMessage();
+                    }
+                }
+
+                // بررسی برد
+                checkVictory() {
+                    const sol = this.puzzle.solution;
+                    for (let r=0; r<this.rows; r++) {
+                        for (let c=0; c<this.cols; c++) {
+                            // خانه‌هایی که باید پر باشند اما پر نشده‌اند یا ضربدر خورده‌اند -> ناقص
+                            if (sol[r][c] === 1 && this.board[r][c] !== 1) return false;
+                            // خانه‌هایی که نباید پر باشند اما پر شده‌اند -> ناقص
+                            if (sol[r][c] === 0 && this.board[r][c] === 1) return false;
+                        }
+                    }
+                    return true;
+                }
+
+                showVictoryMessage() {
+                    setTimeout(() => {
+                        alert(`🎉 تبریک! پازل "${this.puzzle.name}" حل شد! امتیاز نهایی: ${this.score}`);
+                    }, 50);
+                }
+
+                // بررسی دستی (دکمه)
+                manualCheck() {
+                    if (this.gameCompleted) {
+                        alert('این پازل قبلاً تکمیل شده!');
+                        return;
+                    }
+                    
+                    const sol = this.puzzle.solution;
+                    let correct = true;
+                    for (let r=0; r<this.rows; r++) {
+                        for (let c=0; c<this.cols; c++) {
+                            if (sol[r][c] === 1 && this.board[r][c] !== 1) correct = false;
+                            if (sol[r][c] === 0 && this.board[r][c] === 1) correct = false;
+                        }
+                    }
+                    
+                    if (correct) {
+                        this.gameCompleted = true;
+                        this.saveToStorage();
+                        this.render();
+                        alert(`✨ آفرین! پازل درست حل شد. امتیاز: ${this.score}`);
+                    } else {
+                        // جریمه بررسی اشتباه
+                        this.mistakes++;
+                        this.score = Math.max(0, MAX_SCORE - (this.mistakes * PENALTY_PER_MISTAKE));
+                        this.saveToStorage();
+                        this.render();
+                        alert('❌ هنوز کامل نشده. دقت کن! (جریمه ۵ امتیاز)');
+                    }
+                }
+
+                // پاک کردن علامت‌های X (حالت ضربدر)
+                clearXmarks() {
+                    for (let r=0; r<this.rows; r++) {
+                        for (let c=0; c<this.cols; c++) {
+                            if (this.board[r][c] === 2) {
+                                this.board[r][c] = 0;
+                            }
+                        }
+                    }
+                    this.saveToStorage();
+                    this.render();
+                }
+
+                // راهنمای ساده
+                giveHint() {
+                    // پیدا کردن اولین سلول خالی که قطعاً باید پر شود
+                    const sol = this.puzzle.solution;
+                    for (let r=0; r<this.rows; r++) {
+                        for (let c=0; c<this.cols; c++) {
+                            if (sol[r][c] === 1 && this.board[r][c] === 0) {
+                                // راهنمایی: نشان دادن مختصر
+                                alert(`💡 راهنمایی: سطر ${r+1}، ستون ${c+1} باید پر شود.`);
+                                return;
+                            }
+                        }
+                    }
+                    alert('همه خانه‌های ضروری پر شده‌اند. به ضربدرها دقت کن!');
+                }
+
+                // ======================== رندرینگ ========================
+                render() {
+                    if (!this.container) return;
+                    
+                    const puzzle = this.puzzle;
+                    const rows = this.rows;
+                    const cols = this.cols;
+                    
+                    // ساختار کلی
+                    let html = `
+                        <div class="game-header">
+                            <div class="puzzle-title">
+                                <span>🎋 هانجی</span>
+                                <span>${puzzle.name}</span>
+                            </div>
+                            <div style="display:flex; align-items:center;">
+                                <span class="mistakes-badge">⚠️ ${this.mistakes}</span>
+                                <div class="score-area">
+                                    ⭐ امتیاز <span class="score-value">${this.score}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="board-container">
+                            <div class="hanjie-grid" style="grid-template-columns: var(--clue-size) repeat(${cols}, var(--cell-size));">
+                                <!-- گوشه بالا چپ -->
+                                <div class="corner-spacer"></div>
+                    `;
+                    
+                    // راهنماهای ستون (بالا)
+                    for (let c = 0; c < cols; c++) {
+                        const clue = puzzle.cols[c];
+                        html += `<div class="col-clue-cell">`;
+                        clue.slice().reverse().forEach(num => {
+                            html += `<span class="clue-number">${num}</span>`;
+                        });
+                        html += `</div>`;
+                    }
+                    
+                    // ردیف‌های بازی + راهنمای سطر
+                    for (let r = 0; r < rows; r++) {
+                        // راهنمای سطر
+                        const rowClue = puzzle.rows[r];
+                        html += `<div class="row-clue-cell">`;
+                        rowClue.forEach(num => {
+                            html += `<span class="clue-number">${num}</span>`;
+                        });
+                        html += `</div>`;
+                        
+                        // سلول‌های بازی
+                        for (let c = 0; c < cols; c++) {
+                            const cellValue = this.board[r][c];
+                            let cellClass = 'game-cell';
+                            if (cellValue === 1) cellClass += ' filled';
+                            if (cellValue === 2) cellClass += ' x-mark';
+                            
+                            html += `<div class="${cellClass}" data-row="${r}" data-col="${c}"></div>`;
+                        }
+                    }
+                    
+                    html += `</div></div>`;
+                    
+                    // کنترل پنل
+                    html += `
+                        <div class="control-panel">
+                            <button class="btn primary" id="hanjie-check">✅ بررسی</button>
+                            <button class="btn" id="hanjie-reset">🔄 ریست</button>
+                            <button class="btn" id="hanjie-clearx">✕ پاک کردن X</button>
+                            <button class="btn" id="hanjie-hint">🔍 راهنمایی</button>
+                            <select class="btn" id="hanjie-puzzle-select">
+                                ${Object.entries(PUZZLES).map(([id, p]) => `<option value="${id}" ${id === this.currentPuzzleId ? 'selected' : ''}>${p.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="help-section">
+                            <div class="help-title">📘 راهنمای فارسی هانجی (نونوگرام)</div>
+                            <div class="help-text">
+                                🧩 اعداد کنار سطرها و ستون‌ها نشان‌دهندهٔ تعداد خانه‌های متوالی پر شده هستند.<br>
+                                👆 با کلیک روی هر خانه: <strong>خالی → پر (مشکی) → ضربدر (✕) → خالی</strong><br>
+                                🎯 هدف: تصویر مخفی را پیدا کن! هر خانه پر شده باید دقیقاً با راهنماها مطابقت داشته باشد.<br>
+                                ⚠️ هر پر کردن اشتباه ۵ امتیاز کم می‌کند. بازی به‌صورت خودکار ذخیره می‌شود.<br>
+                                🖱️ با انتخاب پازل جدید، همه چیز ریست می‌شود.
+                            </div>
+                        </div>
+                    `;
+                    
+                    this.container.innerHTML = html;
+                    
+                    // اتصال رویدادها به سلول‌های جدید
+                    this.attachCellEvents();
+                    this.attachControlEvents();
+                }
+
+                attachCellEvents() {
+                    const cells = this.container.querySelectorAll('.game-cell');
+                    cells.forEach(cell => {
+                        cell.addEventListener('click', (e) => {
+                            const row = parseInt(cell.dataset.row);
+                            const col = parseInt(cell.dataset.col);
+                            this.handleCellClick(row, col);
+                        });
+                    });
+                }
+
+                attachControlEvents() {
+                    const checkBtn = this.container.querySelector('#hanjie-check');
+                    const resetBtn = this.container.querySelector('#hanjie-reset');
+                    const clearXBtn = this.container.querySelector('#hanjie-clearx');
+                    const hintBtn = this.container.querySelector('#hanjie-hint');
+                    const selectEl = this.container.querySelector('#hanjie-puzzle-select');
+                    
+                    if (checkBtn) checkBtn.addEventListener('click', () => this.manualCheck());
+                    if (resetBtn) resetBtn.addEventListener('click', () => {
+                        if (confirm('تخته بازی ریست شود؟')) {
+                            this.resetBoard();
+                        }
+                    });
+                    if (clearXBtn) clearXBtn.addEventListener('click', () => this.clearXmarks());
+                    if (hintBtn) hintBtn.addEventListener('click', () => this.giveHint());
+                    if (selectEl) {
+                        selectEl.addEventListener('change', (e) => {
+                            const newId = e.target.value;
+                            if (newId !== this.currentPuzzleId) {
+                                if (confirm('تغییر پازل باعث از دست رفتن پیشرفت فعلی می‌شود. ادامه می‌دهی؟')) {
+                                    this.changePuzzle(newId);
+                                } else {
+                                    // برگرداندن select به قبلی
+                                    selectEl.value = this.currentPuzzleId;
+                                }
+                            }
+                        });
+                    }
+                }
+
+                attachEvents() {
+                    // رندر اولیه همه چیز را می‌سازد، رویدادها در render صدا زده می‌شوند
+                }
+
+                resetGame() {
+                    this.currentPuzzleId = DEFAULT_PUZZLE_ID;
+                    this.puzzle = PUZZLES[this.currentPuzzleId];
+                    this.rows = this.puzzle.rows.length;
+                    this.cols = this.puzzle.cols.length;
+                    this.initBoard();
+                    this.mistakes = 0;
+                    this.score = MAX_SCORE;
+                    this.gameCompleted = false;
+                    this.saveToStorage();
+                    this.render();
+                }
+            }
+
+            // ======================== راه‌اندازی ========================
+            // صبر می‌کنیم تا DOM آماده شود
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    new HanjieGame('hanjie-game');
+                });
+            } else {
+                new HanjieGame('hanjie-game');
+            }
+        })();
+    </script>
+</body>
+</html>

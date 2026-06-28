@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>بازی سوکوژن | معمای ژاپنی</title>
+  <style>
+    /* 2026 Modern CSS – responsive, clean, dark/light adaptive */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(145deg, #1a2f28 0%, #1e3a2f 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', 'Vazirmatn', system-ui, sans-serif;
+      padding: 16px;
+      margin: 0;
+    }
+
+    /* کانتینر اصلی بازی – هر جایی با id="sokojun-game" قرار گیرد */
+    #sokojun-game {
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+      background: rgba(22, 40, 32, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 48px;
+      padding: 24px 20px 30px;
+      box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(180, 210, 160, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    /* عنوان و راهنما */
+    .game-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #d4edc9;
+      text-shadow: 0 4px 8px #0f1e16;
+      margin-bottom: 8px;
+      word-break: keep-all;
+    }
+
+    .sub {
+      color: #b1cfaa;
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 16px;
+      border-bottom: 1px dashed #3a6852;
+      padding-bottom: 12px;
+    }
+
+    /* راهنمای فارسی */
+    .guide {
+      background: #1e3329;
+      border-radius: 32px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      color: #e2f3da;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      border-right: 6px solid #7fb07f;
+      box-shadow: inset 0 2px 6px #0c1913, 0 6px 10px rgba(0,0,0,0.2);
+    }
+
+    .guide p {
+      margin-bottom: 8px;
+    }
+
+    .guide strong {
+      color: #ffecb3;
+    }
+
+    /* پنل امتیاز و سطح */
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #14261e;
+      border-radius: 100px;
+      padding: 12px 24px;
+      margin-bottom: 22px;
+      color: #f1ffe7;
+      border: 1px solid #4f7b66;
+      box-shadow: inset 0 2px 5px #0b1711, 0 6px 8px rgba(0,0,0,0.2);
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+
+    .stat-icon {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+
+    .badge {
+      background: #2b4e3e;
+      padding: 6px 16px;
+      border-radius: 40px;
+      color: #e0f2d0;
+      font-weight: bold;
+    }
+
+    /* بوم بازی */
+    .canvas-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 18px;
+      filter: drop-shadow(0 12px 12px #0a1610);
+    }
+
+    #gameCanvas {
+      background: #1e3529;
+      border-radius: 36px;
+      display: block;
+      width: 100%;
+      height: auto;
+      max-width: 500px;
+      aspect-ratio: 1/1;
+      border: 4px solid #3f735b;
+      box-shadow: inset 0 0 0 1px #6e9f83, 0 0 0 2px #1f3b2c;
+      touch-action: none;  /* جلوگیری از اسکرول هنگام لمس */
+      cursor: pointer;
+    }
+
+    /* دکمه‌های جهت‌یاب لمسی */
+    .direction-pad {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 16px 0 8px;
+    }
+
+    .dir-row {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin: 6px 0;
+    }
+
+    .dir-btn {
+      background: #244b39;
+      border: none;
+      border-bottom: 5px solid #0e281e;
+      color: #f1ffe7;
+      font-size: 2.4rem;
+      width: 80px;
+      height: 80px;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 0 #0a1f16, 0 6px 12px black;
+      cursor: pointer;
+      transition: all 0.06s;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .dir-btn:active {
+      transform: translateY(5px);
+      box-shadow: 0 3px 0 #0a1f16, 0 6px 10px black;
+      border-bottom-width: 2px;
+    }
+
+    .dir-btn svg {
+      width: 36px;
+      height: 36px;
+      fill: #e5f5db;
+    }
+
+    /* دکمه‌های عملیات */
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      background: #2f5945;
+      border: none;
+      border-bottom: 4px solid #14392a;
+      color: #f4fff0;
+      padding: 12px 22px;
+      border-radius: 60px;
+      font-size: 1rem;
+      font-weight: bold;
+      box-shadow: 0 5px 0 #0f261c, 0 4px 8px black;
+      cursor: pointer;
+      transition: 0.08s;
+      min-width: 100px;
+      touch-action: manipulation;
+      backdrop-filter: blur(4px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #0f261c, 0 4px 8px black;
+      border-bottom-width: 2px;
+    }
+
+    .btn.reset {
+      background: #4f5d4c;
+      border-bottom-color: #2d3d2a;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 20px;
+      color: #86a58b;
+      font-size: 0.8rem;
+    }
+
+    /* پیغام برد */
+    .win-message {
+      background: #c7e6b5;
+      color: #0b291b;
+      padding: 10px 18px;
+      border-radius: 60px;
+      font-weight: bold;
+      margin: 12px auto 0;
+      display: inline-block;
+    }
+
+    /* تنظیمات رسپانسیو اضافی */
+    @media (max-width: 480px) {
+      #sokojun-game { padding: 18px 12px 24px; }
+      h1 { font-size: 2rem; }
+      .dir-btn { width: 70px; height: 70px; font-size: 2rem; }
+      .btn { padding: 10px 14px; min-width: 80px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- کانتینر اصلی با id مشخص – شما می‌توانید این div را هر جای صفحه قرار دهید -->
+  <div id="sokojun-game">
+    <div class="game-header">
+      <h1>🏯 سوکوژن</h1>
+      <div class="sub">Sokojun · معمای انبار ژاپنی</div>
+    </div>
+
+    <!-- راهنمای فارسی بازی -->
+    <div class="guide">
+      <p>🔰 <strong>راهنما:</strong> شخصیت (👤) باید جعبه‌ها (📦) را به نقاط هدف (⭐) برساند.</p>
+      <p>🎮 با کلیدهای جهت‌نما، دکمه‌های لمسی یا کلیک روی خانه‌ی مجاور حرکت کنید.</p>
+      <p>💾 بازی به‌طور خودکار ذخیره می‌شود. بهترین رکورد حرکت هر سطح ثبت می‌گردد.</p>
+    </div>
+
+    <!-- آمار -->
+    <div class="stats">
+      <div class="stat-item"><span class="stat-icon">📊</span> سطح <span id="levelDisplay">1/4</span></div>
+      <div class="stat-item"><span class="stat-icon">🔄</span> حرکات <span id="moveCounter">0</span></div>
+      <div class="stat-item"><span class="stat-icon">🏆</span> بهترین <span id="bestDisplay">—</span></div>
+    </div>
+
+    <!-- بوم نقاشی -->
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="500" height="500"></canvas>
+    </div>
+
+    <!-- پد جهت‌یاب لمسی -->
+    <div class="direction-pad">
+      <div class="dir-row">
+        <button class="dir-btn" id="btnUp" aria-label="بالا">▲</button>
+      </div>
+      <div class="dir-row">
+        <button class="dir-btn" id="btnLeft" aria-label="چپ">◀</button>
+        <button class="dir-btn" id="btnDown" aria-label="پایین">▼</button>
+        <button class="dir-btn" id="btnRight" aria-label="راست">▶</button>
+      </div>
+    </div>
+
+    <!-- دکمه‌های کنترلی -->
+    <div class="action-bar">
+      <button class="btn" id="resetLevelBtn">🔄 شروع مجدد</button>
+      <button class="btn reset" id="prevLevelBtn">⏪ قبلی</button>
+      <button class="btn reset" id="nextLevelBtn">بعدی ⏩</button>
+    </div>
+
+    <div id="winAnnounce" style="text-align: center; min-height: 36px;"></div>
+    <div class="footer-note">💡 حرکت با کیبورد (↑↓←→) نیز فعال است</div>
+  </div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      // ---------- استانداردهای ۲۰۲۶: کد ماژولار، const/let، async/await در صورت نیاز ----------
+      // ذخیره‌سازی در localStorage با namespace
+      const STORAGE_KEY_STATE = 'sokojun_gameState_v1';
+      const STORAGE_KEY_SCORES = 'sokojun_bestScores_v1';
+
+      // المان‌های DOM
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const levelDisplay = document.getElementById('levelDisplay');
+      const moveCounterSpan = document.getElementById('moveCounter');
+      const bestDisplay = document.getElementById('bestDisplay');
+      const winAnnounce = document.getElementById('winAnnounce');
+
+      // دکمه‌ها
+      const btnUp = document.getElementById('btnUp');
+      const btnDown = document.getElementById('btnDown');
+      const btnLeft = document.getElementById('btnLeft');
+      const btnRight = document.getElementById('btnRight');
+      const resetBtn = document.getElementById('resetLevelBtn');
+      const prevBtn = document.getElementById('prevLevelBtn');
+      const nextBtn = document.getElementById('nextLevelBtn');
+
+      // ---------- تعریف مراحل (سطوح) ----------
+      // هر سطح: آرایه‌ای از رشته‌ها
+      // نشانه‌ها:  # دیوار, . هدف, $ جعبه, @ بازیکن, + بازیکن روی هدف, * جعبه روی هدف, space زمین خالی
+      const LEVELS = [
+        // سطح ۱ - ساده
+        [
+          "  #####  ",
+          "###   ###",
+          "#  $  . #",
+          "### $@####",
+          "#  .$   #",
+          "#   $   #",
+          "#########",
+        ],
+        // سطح ۲
+        [
+          "  #####   ",
+          "###   ### ",
+          "#  $  $# ",
+          "### .@####",
+          "#  .$ $ # ",
+          "##  $   # ",
+          " ######## ",
+        ],
+        // سطح ۳
+        [
+          "  #######  ",
+          "### . . ###",
+          "#  $ $ $  #",
+          "#   @$    #",
+          "###  $  ###",
+          "  ###.###  ",
+          "    # #    ",
+        ],
+        // سطح ۴
+        [
+          "   #####   ",
+          " ###   ### ",
+          "##  $  .## ",
+          "#  $@$.  # ",
+          "##  .$  ## ",
+          " ###   ### ",
+          "   #####   ",
+        ]
+      ];
+
+      // پارامترهای بازی
+      let currentLevelIndex = 0;
+      let grid = [];              // آرایه دو بعدی از کاراکترها
+      let playerPos = { x: -1, y: -1 };
+      let moves = 0;
+      let gameCompleted = false;   // آیا سطح فعلی تکمیل شده؟
+      let boxesTotal = 0;
+      let targetsTotal = 0;
+
+      // بهترین رکوردها (امتیاز = تعداد حرکات کمتر بهتر)
+      let bestScores = [];
+
+      // ---------- توابع کمکی ذخیره و بازیابی ----------
+      function loadBestScores() {
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY_SCORES);
+          if (stored) {
+            bestScores = JSON.parse(stored);
+          } else {
+            bestScores = new Array(LEVELS.length).fill(null);
+          }
+        } catch (e) {
+          bestScores = new Array(LEVELS.length).fill(null);
+        }
+        // اطمینان از طول آرایه
+        while (bestScores.length < LEVELS.length) bestScores.push(null);
+        updateBestDisplay();
+      }
+
+      function saveBestScores() {
+        try {
+          localStorage.setItem(STORAGE_KEY_SCORES, JSON.stringify(bestScores));
+        } catch (e) {}
+      }
+
+      function updateBestDisplay() {
+        const best = bestScores[currentLevelIndex];
+        if (best !== null && best !== undefined) {
+          bestDisplay.textContent = best;
+        } else {
+          bestDisplay.textContent = '—';
+        }
+      }
+
+      // ذخیره وضعیت کامل بازی
+      function saveGameState() {
+        const state = {
+          levelIndex: currentLevelIndex,
+          grid: grid,
+          playerPos: playerPos,
+          moves: moves,
+          completed: gameCompleted,
+        };
+        try {
+          localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(state));
+        } catch (e) {}
+      }
+
+      // بارگذاری وضعیت (در صورت وجود)
+      function loadGameState() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY_STATE);
+          if (!saved) return false;
+          const state = JSON.parse(saved);
+          if (state && typeof state.levelIndex === 'number') {
+            currentLevelIndex = Math.min(state.levelIndex, LEVELS.length - 1);
+            grid = state.grid;
+            playerPos = state.playerPos;
+            moves = state.moves;
+            gameCompleted = state.completed || false;
+            return true;
+          }
+        } catch (e) {}
+        return false;
+      }
+
+      // مقداردهی اولیه یا بارگذاری از localStorage
+      function initOrLoad() {
+        loadBestScores();
+        const hasSaved = loadGameState();
+        if (!hasSaved) {
+          // بارگذاری سطح اول از ابتدا
+          currentLevelIndex = 0;
+          loadLevel(currentLevelIndex);
+        } else {
+          // اطمینان از صحت ساختار grid
+          if (!grid || grid.length === 0) loadLevel(currentLevelIndex);
+          else {
+            // محاسبه مجدد تعداد جعبه‌ها و اهداف برای نمایش صحیح
+            countBoxesAndTargets();
+          }
+        }
+        // به‌روزرسانی نمایش
+        updateMoveDisplay();
+        updateLevelText();
+        updateBestDisplay();
+        renderCanvas();
+      }
+
+      // بارگذاری سطح با ایندکس
+      function loadLevel(index) {
+        const levelData = LEVELS[index];
+        // تبدیل رشته‌ها به آرایه دو بعدی
+        grid = levelData.map(row => row.split(''));
+        playerPos = { x: -1, y: -1 };
+        
+        // پیدا کردن بازیکن و شمارش
+        for (let y = 0; y < grid.length; y++) {
+          for (let x = 0; x < grid[y].length; x++) {
+            const ch = grid[y][x];
+            if (ch === '@' || ch === '+') {
+              playerPos = { x, y };
+            }
+          }
+        }
+        moves = 0;
+        gameCompleted = false;
+        countBoxesAndTargets();
+        // اگر بازیکن پیدا نشد (نباید رخ دهد)
+        if (playerPos.x === -1) console.warn('بازیکن در سطح یافت نشد');
+      }
+
+      function countBoxesAndTargets() {
+        let boxes = 0, targets = 0;
+        for (let y = 0; y < grid.length; y++) {
+          for (let x = 0; x < grid[y].length; x++) {
+            const ch = grid[y][x];
+            if (ch === '$' || ch === '*') boxes++;
+            if (ch === '.' || ch === '+' || ch === '*') targets++;
+          }
+        }
+        boxesTotal = boxes;
+        targetsTotal = targets;
+      }
+
+      // بررسی وضعیت برد (همه جعبه‌ها روی هدف)
+      function checkWin() {
+        for (let y = 0; y < grid.length; y++) {
+          for (let x = 0; x < grid[y].length; x++) {
+            // اگر جعبه‌ای روی هدف نباشد (یعنی '$' تنها)
+            if (grid[y][x] === '$') return false;
+          }
+        }
+        return true;
+      }
+
+      // به‌روزرسانی ui حرکت
+      function updateMoveDisplay() {
+        moveCounterSpan.textContent = moves;
+      }
+
+      function updateLevelText() {
+        levelDisplay.textContent = `${currentLevelIndex+1}/${LEVELS.length}`;
+      }
+
+      // تلاش برای حرکت در جهت (dx, dy)
+      function attemptMove(dx, dy) {
+        if (gameCompleted) return false;
+        if (!playerPos) return false;
+
+        const x = playerPos.x;
+        const y = playerPos.y;
+        const newX = x + dx;
+        const newY = y + dy;
+
+        // خارج از محدوده
+        if (newY < 0 || newY >= grid.length || newX < 0 || newX >= grid[0].length) return false;
+
+        const currentCell = grid[y][x];
+        const targetCell = grid[newY][newX];
+
+        // دیوار
+        if (targetCell === '#') return false;
+
+        // اگر خانه خالی یا هدف باشد
+        if (targetCell === ' ' || targetCell === '.') {
+          // جابجایی بازیکن
+          movePlayer(x, y, newX, newY);
+          moves++;
+          updateMoveDisplay();
+          afterMove();
+          return true;
+        }
+        
+        // اگر جعبه باشد
+        if (targetCell === '$' || targetCell === '*') {
+          const boxNewX = newX + dx;
+          const boxNewY = newY + dy;
+          if (boxNewY < 0 || boxNewY >= grid.length || boxNewX < 0 || boxNewX >= grid[0].length) return false;
+          const beyondCell = grid[boxNewY][boxNewX];
+          
+          // اگر جای بعدی خالی یا هدف باشد
+          if (beyondCell === ' ' || beyondCell === '.') {
+            // حرکت جعبه
+            const wasBoxOnTarget = (targetCell === '*');
+            const isTargetBeyond = (beyondCell === '.');
+            
+            // 1. خانه قبلی بازیکن به کف یا هدف تبدیل شود
+            grid[y][x] = (currentCell === '+') ? '.' : ' ';
+            // 2. خانه جعبه تبدیل به بازیکن (روی هدف یا خالی)
+            grid[newY][newX] = (wasBoxOnTarget) ? '+' : '@';
+            // 3. خانه جدید جعبه
+            grid[boxNewY][boxNewX] = isTargetBeyond ? '*' : '$';
+            
+            // به‌روزرسانی موقعیت بازیکن
+            playerPos = { x: newX, y: newY };
+            
+            moves++;
+            updateMoveDisplay();
+            afterMove();
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function movePlayer(oldX, oldY, newX, newY) {
+        const oldChar = grid[oldY][oldX];
+        const newChar = grid[newY][newX];
+        
+        // تعیین کاراکتر قبلی
+        grid[oldY][oldX] = (oldChar === '@') ? ' ' : '.';
+        // تعیین کاراکتر جدید
+        grid[newY][newX] = (newChar === '.') ? '+' : '@';
+        playerPos = { x: newX, y: newY };
+      }
+
+      function afterMove() {
+        const win = checkWin();
+        if (win && !gameCompleted) {
+          gameCompleted = true;
+          // بررسی رکورد
+          const currentBest = bestScores[currentLevelIndex];
+          if (currentBest === null || moves < currentBest) {
+            bestScores[currentLevelIndex] = moves;
+            saveBestScores();
+            updateBestDisplay();
+            winAnnounce.innerHTML = `<span class="win-message">🎉 مرحله تکمیل! رکورد جدید: ${moves} حرکت 🎉</span>`;
+          } else {
+            winAnnounce.innerHTML = `<span class="win-message">✅ مرحله کامل شد! (${moves} حرکت)</span>`;
+          }
+        } else {
+          winAnnounce.innerHTML = '';
+        }
+        // ذخیره خودکار
+        saveGameState();
+        renderCanvas();
+        // اگر برد و سطح بعدی وجود دارد می‌توان پیشنهاد داد (با دکمه)
+      }
+
+      // ریست سطح فعلی
+      function resetCurrentLevel() {
+        loadLevel(currentLevelIndex);
+        gameCompleted = false;
+        moves = 0;
+        updateMoveDisplay();
+        updateBestDisplay();
+        winAnnounce.innerHTML = '';
+        saveGameState();
+        renderCanvas();
+      }
+
+      // تغییر سطح
+      function goToLevel(newIndex) {
+        if (newIndex < 0 || newIndex >= LEVELS.length) return;
+        currentLevelIndex = newIndex;
+        loadLevel(currentLevelIndex);
+        gameCompleted = false;
+        moves = 0;
+        updateMoveDisplay();
+        updateLevelText();
+        updateBestDisplay();
+        winAnnounce.innerHTML = '';
+        saveGameState();
+        renderCanvas();
+      }
+
+      // ---------- رسم روی بوم ----------
+      function renderCanvas() {
+        if (!grid.length) return;
+        const rows = grid.length;
+        const cols = grid[0].length;
+        const size = Math.min(canvas.width / cols, canvas.height / rows);
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            const cell = grid[y][x];
+            const xPos = x * size;
+            const yPos = y * size;
+            
+            // پس‌زمینه
+            if (cell === '#') {
+              ctx.fillStyle = '#3a2e28';
+              ctx.fillRect(xPos, yPos, size, size);
+              ctx.fillStyle = '#5d4a3a';
+              ctx.fillRect(xPos+2, yPos+2, size-4, size-4);
+              ctx.fillStyle = '#826b58';
+              ctx.fillRect(xPos+4, yPos+4, size-8, size-8);
+            } else {
+              // کف
+              const gradient = ctx.createLinearGradient(xPos, yPos, xPos+size, yPos+size);
+              gradient.addColorStop(0, '#c0b7a8');
+              gradient.addColorStop(1, '#a3947c');
+              ctx.fillStyle = gradient;
+              ctx.fillRect(xPos, yPos, size, size);
+              
+              // هدف
+              if (cell === '.' || cell === '+' || cell === '*') {
+                ctx.beginPath();
+                ctx.arc(xPos + size/2, yPos + size/2, size*0.3, 0, 2*Math.PI);
+                ctx.fillStyle = '#f9d170';
+                ctx.shadowColor = '#ffd966';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#b57f2a';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+              }
+            }
+            
+            // جعبه
+            if (cell === '$' || cell === '*') {
+              const boxGrad = ctx.createLinearGradient(xPos+4, yPos+4, xPos+size-8, yPos+size-8);
+              boxGrad.addColorStop(0, '#b57f4a');
+              boxGrad.addColorStop(1, '#8b5e2e');
+              ctx.fillStyle = boxGrad;
+              ctx.shadowColor = '#4d2f14';
+              ctx.shadowBlur = 6;
+              ctx.fillRect(xPos+6, yPos+6, size-12, size-12);
+              ctx.shadowBlur = 0;
+              ctx.strokeStyle = '#4d2e18';
+              ctx.lineWidth = 2.5;
+              ctx.strokeRect(xPos+6, yPos+6, size-12, size-12);
+              // بند جعبه
+              ctx.beginPath();
+              ctx.moveTo(xPos+size*0.3, yPos+size*0.4);
+              ctx.lineTo(xPos+size*0.7, yPos+size*0.4);
+              ctx.lineTo(xPos+size*0.7, yPos+size*0.6);
+              ctx.lineTo(xPos+size*0.3, yPos+size*0.6);
+              ctx.closePath();
+              ctx.strokeStyle = '#3d2a1a';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+            }
+            
+            // بازیکن
+            if (cell === '@' || cell === '+') {
+              // بدن
+              ctx.beginPath();
+              ctx.arc(xPos + size/2, yPos + size/2.4, size*0.25, 0, 2*Math.PI);
+              ctx.fillStyle = '#3f72af';
+              ctx.shadowColor = '#1e3a5f';
+              ctx.shadowBlur = 10;
+              ctx.fill();
+              ctx.strokeStyle = '#11212e';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+              // چشم‌ها
+              ctx.beginPath();
+              ctx.arc(xPos + size*0.4, yPos + size*0.4, size*0.06, 0, 2*Math.PI);
+              ctx.fillStyle = '#f5f5f5';
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(xPos + size*0.6, yPos + size*0.4, size*0.06, 0, 2*Math.PI);
+              ctx.fill();
+              ctx.fillStyle = '#1a1a1a';
+              ctx.beginPath();
+              ctx.arc(xPos + size*0.38, yPos + size*0.38, size*0.03, 0, 2*Math.PI);
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(xPos + size*0.62, yPos + size*0.38, size*0.03, 0, 2*Math.PI);
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            }
+          }
+        }
+        
+        // رسم خطوط شبکه
+        ctx.beginPath();
+        ctx.strokeStyle = '#5f7a6b';
+        ctx.lineWidth = 1.2;
+        for (let i = 0; i <= cols; i++) {
+          ctx.moveTo(i * size, 0);
+          ctx.lineTo(i * size, canvas.height);
+        }
+        for (let i = 0; i <= rows; i++) {
+          ctx.moveTo(0, i * size);
+          ctx.lineTo(canvas.width, i * size);
+        }
+        ctx.stroke();
+      }
+
+      // ---------- رویدادها ----------
+      function handleKey(e) {
+        const key = e.key;
+        // جلوگیری از اسکرول با arrow keys
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+          e.preventDefault();
+        }
+        if (key === 'ArrowUp') attemptMove(0, -1);
+        else if (key === 'ArrowDown') attemptMove(0, 1);
+        else if (key === 'ArrowLeft') attemptMove(-1, 0);
+        else if (key === 'ArrowRight') attemptMove(1, 0);
+      }
+
+      // کلیک روی canvas برای حرکت به سمت خانه کلیک شده (اختیاری)
+      function handleCanvasClick(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const canvasX = (e.clientX - rect.left) * scaleX;
+        const canvasY = (e.clientY - rect.top) * scaleY;
+        
+        const rows = grid.length;
+        const cols = grid[0].length;
+        const cellW = canvas.width / cols;
+        const cellH = canvas.height / rows;
+        
+        const gridX = Math.floor(canvasX / cellW);
+        const gridY = Math.floor(canvasY / cellH);
+        
+        if (!playerPos) return;
+        const dx = gridX - playerPos.x;
+        const dy = gridY - playerPos.y;
+        
+        if ((Math.abs(dx) === 1 && dy === 0) || (Math.abs(dy) === 1 && dx === 0)) {
+          attemptMove(dx, dy);
+        }
+      }
+
+      // تنظیم مجدد اندازه canvas (رسپانسیو)
+      function resizeCanvas() {
+        const container = canvas.parentElement;
+        const size = Math.min(container.clientWidth, 500);
+        canvas.style.width = size + 'px';
+        canvas.style.height = size + 'px';
+        // نسبت ابعاد ۱:۱
+        renderCanvas();
+      }
+
+      // ---------- راه‌اندازی ----------
+      function init() {
+        initOrLoad();
+        
+        window.addEventListener('keydown', handleKey);
+        canvas.addEventListener('click', handleCanvasClick);
+        
+        btnUp.addEventListener('click', () => attemptMove(0, -1));
+        btnDown.addEventListener('click', () => attemptMove(0, 1));
+        btnLeft.addEventListener('click', () => attemptMove(-1, 0));
+        btnRight.addEventListener('click', () => attemptMove(1, 0));
+        
+        resetBtn.addEventListener('click', resetCurrentLevel);
+        prevBtn.addEventListener('click', () => {
+          if (currentLevelIndex > 0) goToLevel(currentLevelIndex - 1);
+        });
+        nextBtn.addEventListener('click', () => {
+          if (currentLevelIndex < LEVELS.length - 1) goToLevel(currentLevelIndex + 1);
+        });
+        
+        window.addEventListener('resize', () => {
+          resizeCanvas();
+          renderCanvas();
+        });
+        
+        resizeCanvas();
+        renderCanvas();
+      }
+
+      // اجرا
+      init();
+    })();
+  </script>
+</body>
+</html>
